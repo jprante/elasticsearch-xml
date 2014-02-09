@@ -1,0 +1,6 @@
+{
+    "@context" : {
+        "ns" : "http://example.org/"
+    },
+    "ns:foo" : "bar"
+}
