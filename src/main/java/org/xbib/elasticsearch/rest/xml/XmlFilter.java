@@ -1,24 +1,8 @@
-/*
- * Licensed to ElasticSearch and Shay Banon under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. ElasticSearch licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
 
 package org.xbib.elasticsearch.rest.xml;
 
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.UnicodeUtil;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
@@ -26,6 +10,8 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.http.HttpChannel;
+import org.elasticsearch.http.HttpRequest;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestFilter;
 import org.elasticsearch.rest.RestFilterChain;
@@ -34,6 +20,7 @@ import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.rest.StringRestResponse;
 
+import org.elasticsearch.rest.Utf8RestResponse;
 import org.xbib.elasticsearch.common.xcontent.XmlXContentBuilder;
 import org.xbib.elasticsearch.common.xcontent.XmlXContentFactory;
 import org.xbib.elasticsearch.common.xcontent.XmlXContentType;
@@ -44,9 +31,7 @@ import java.util.Map;
 /**
  * XML filter for Elasticsearch REST requests and responses.
  *
- * XML requests must be declared with header Content-type: application/xml
- *
- * To receive XML responses, the header Accept: must contain the sequence application/xml
+ * To receive XML responses, the request header Accept: must contain "application/xml"
  */
 public class XmlFilter extends RestFilter {
 
@@ -63,10 +48,16 @@ public class XmlFilter extends RestFilter {
         filterChain.continueProcessing(new XmlRequest(request), new XmlChannel(request, channel));
     }
 
+    private boolean isXml(RestRequest request) {
+        return "application/xml".equals(request.header("Accept"))
+                || request.hasParam("xml");
+    }
+
     /**
-     * Unwraps an XML REST request to JSON if Content-type: header declares application/xml
+     * Unwraps an XML REST request to JSON if Content-type: header declares application/xml.
+     * We must extend HttpRequest because this will get used in a casting in the HTTP controller.
      */
-    class XmlRequest extends RestRequest {
+    class XmlRequest extends HttpRequest {
 
         private RestRequest request;
 
@@ -101,7 +92,7 @@ public class XmlFilter extends RestFilter {
 
         @Override
         public BytesReference content() {
-            if ("application/xml".equals(request.header("Content-type"))) {
+            if (isXml(request)) {
                 XContentParser parser = null;
                 try {
                     BytesReference b = request.content();
@@ -153,9 +144,10 @@ public class XmlFilter extends RestFilter {
     }
 
     /**
-     * Wraps a REST channel response into XML if Accept: header declares application/xml
+     * Wraps a REST channel response into XML if Accept: header declares application/xml.
+     * This must extend HttpChannel because this will get used in a casting in the HTTP controller.
      */
-    class XmlChannel implements RestChannel {
+    class XmlChannel implements HttpChannel {
 
         private final RestRequest request;
 
@@ -171,8 +163,7 @@ public class XmlFilter extends RestFilter {
             if (!response.status().equals(RestStatus.OK)) {
                 channel.sendResponse(response);
             }
-            String accept = request.header("Accept");
-            if (accept != null && accept.contains("application/xml")) {
+            if (isXml(request)) {
                 XContentParser parser = null;
                 try {
                     byte[] b = response.content();
@@ -184,8 +175,7 @@ public class XmlFilter extends RestFilter {
                         builder.prettyPrint();
                     }
                     builder.copyCurrentStructure(parser);
-                    response.addHeader("Content-type", "application/xml");
-                    channel.sendResponse(new StringRestResponse(RestStatus.OK, builder.string()));
+                    channel.sendResponse(new XmlRestResponse(RestStatus.OK, builder.string()));
                     return;
                 } catch (Throwable e) {
                     logger.error(e.getMessage(), e);
@@ -199,5 +189,23 @@ public class XmlFilter extends RestFilter {
             }
             channel.sendResponse(response);
         }
+    }
+
+    static class XmlRestResponse extends Utf8RestResponse {
+
+        public XmlRestResponse(RestStatus status, String content) {
+            super(status, convert(content));
+        }
+
+        public String contentType() {
+            return "text/xml; charset=UTF-8";
+        }
+
+        private static BytesRef convert(String content) {
+            BytesRef result = new BytesRef();
+            UnicodeUtil.UTF16toUTF8(content, 0, content.length(), result);
+            return result;
+        }
+
     }
 }

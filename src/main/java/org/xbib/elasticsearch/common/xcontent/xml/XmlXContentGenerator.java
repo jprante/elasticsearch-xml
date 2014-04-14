@@ -1,21 +1,3 @@
-/*
- * Licensed to ElasticSearch and Shay Banon under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. ElasticSearch licenses this
- * file to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
 
 package org.xbib.elasticsearch.common.xcontent.xml;
 
@@ -65,17 +47,12 @@ public class XmlXContentGenerator implements XContentGenerator {
         return this;
     }
 
-    public XmlXParams getParams() {
-        return params;
-    }
-
     public XmlNamespaceContext getNamespaceContext() {
         return params.getNamespaceContext();
     }
 
     @Override
     public XContentType contentType() {
-        // TODO add XML content type to Elasticsearch core code
         //return XmlXContentType.XML;
         return null;
     }
@@ -108,9 +85,11 @@ public class XmlXContentGenerator implements XContentGenerator {
                 generator.startWrappedValue(null, params.getQName());
             }
             generator.writeStartObject();
-            if (!started) {
-                for (String prefix : getNamespaceContext().getNamespaces().keySet()) {
-                    generator.getStaxWriter().writeNamespace(prefix, getNamespaceContext().getNamespaceURI(prefix));
+            if (!started ) {
+                if (getNamespaceContext() != null &&  getNamespaceContext().getNamespaces() != null) {
+                    for (String prefix : getNamespaceContext().getNamespaces().keySet()) {
+                        generator.getStaxWriter().writeNamespace(prefix, getNamespaceContext().getNamespaceURI(prefix));
+                    }
                 }
                 started = true;
             }
@@ -438,7 +417,7 @@ public class XmlXContentGenerator implements XContentGenerator {
         int pos = name.indexOf(':');
         if (pos > 0) {
             nsPrefix = name.substring(0, pos);
-            nsURI = context.getNamespaceURI(nsPrefix);
+            nsURI = context != null? context.getNamespaceURI(nsPrefix) : XmlXParams.DEFAULT_ROOT.getNamespaceURI();
             if (nsURI == null) {
                 throw new IOException("unknown namespace prefix: " + nsPrefix);
             }

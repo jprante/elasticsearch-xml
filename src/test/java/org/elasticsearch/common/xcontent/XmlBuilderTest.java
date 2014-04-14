@@ -1,3 +1,4 @@
+
 package org.elasticsearch.common.xcontent;
 
 import org.elasticsearch.common.io.Streams;
@@ -22,7 +23,7 @@ public class XmlBuilderTest extends Assert {
         builder.startObject().field("Hello", "World").endObject();
         assertEquals(
                 builder.string(),
-                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:es=\"http://elasticsearch.org/ns/1.0/\"><Hello>World</Hello></root>"
+                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\"><Hello>World</Hello></root>"
         );
     }
 
@@ -33,7 +34,7 @@ public class XmlBuilderTest extends Assert {
         builder.startObject().field("Hello", "World").endObject();
         assertEquals(
                 builder.string(),
-                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:es=\"http://elasticsearch.org/ns/1.0/\"><Hello>World</Hello></root>"
+                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\"><Hello>World</Hello></root>"
         );
     }
 
@@ -92,14 +93,16 @@ public class XmlBuilderTest extends Assert {
                 .endObject();
         assertEquals(
                 builder.string(),
-                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:es=\"http://elasticsearch.org/ns/1.0/\"><author><creator>John Doe</creator><role>writer</role></author><author><creator>Joe Smith</creator><role>illustrator</role></author></root>"
+                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\"><author><creator>John Doe</creator><role>writer</role></author><author><creator>Joe Smith</creator><role>illustrator</role></author></root>"
         );
 
     }
 
     @Test
     public void testXmlAttributes() throws Exception {
-        XmlXParams params = new XmlXParams();
+        XmlNamespaceContext namespaceContext = XmlNamespaceContext.newInstance();
+        namespaceContext.addNamespace("es", "http://elasticsearch.org/ns/1.0/");
+        XmlXParams params = new XmlXParams(namespaceContext);
         XmlXContentBuilder builder = xmlBuilder(params);
         builder.startObject()
                 .startObject("author")
@@ -122,7 +125,7 @@ public class XmlBuilderTest extends Assert {
                 .endObject();
         assertEquals(
                 builder.string(),
-                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:es=\"http://elasticsearch.org/ns/1.0/\"><author>John Doe</author><author>Joe Smith</author></root>"
+                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\"><author>John Doe</author><author>Joe Smith</author></root>"
         );
     }
 
@@ -143,7 +146,7 @@ public class XmlBuilderTest extends Assert {
                 .endArray()
                 .endObject();
         assertEquals(
-                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:es=\"http://elasticsearch.org/ns/1.0/\"><author><creator>John Doe</creator><role>writer</role></author><author><creator>Joe Smith</creator><role>illustrator</role></author></root>",
+                "<root xmlns=\"http://elasticsearch.org/ns/1.0/\"><author><creator>John Doe</creator><role>writer</role></author><author><creator>Joe Smith</creator><role>illustrator</role></author></root>",
                 builder.string()
         );
     }

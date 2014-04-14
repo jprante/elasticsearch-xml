@@ -21,7 +21,7 @@ Installation
 =============  ===========  =================  ===========================================================
 ES version     Plugin       Release date       Command
 -------------  -----------  -----------------  -----------------------------------------------------------
-1.0.0.RC2      1.0.0.RC2.1  Feb 9, 2014        ./bin/plugin --install xml --url http://bit.ly/Np1F0h
+1.1.0          1.1.0.0      Apr 14, 2014        ./bin/plugin --install xml --url http://bit.ly/1kXqtqI
 =============  ===========  =================  ===========================================================
 
 Do not forget to restart the node after installing.
@@ -96,7 +96,7 @@ Consider the following JSON documents::
 The same in XML::
 
     curl -H 'Accept: application/xml'  '0:9200/_search?pretty'
-    <root xmlns="http://elasticsearch.org/ns/1.0/" xmlns:es="http://elasticsearch.org/ns/1.0/" xmlns:p="http://dummy.org">
+    <root xmlns="http://elasticsearch.org/ns/1.0/" xmlns:p="http://dummy.org">
       <took>3</took>
       <timed_out>false</timed_out>
       <shards>
