@@ -1,4 +1,2 @@
-org.xbib.elasticsearch.common.xcontent
-org.xbib.elasticsearch.common.xcontent.xml
-org.xbib.elasticsearch.plugin.xml
-org.xbib.elasticsearch.rest.xml
+org.xbib.elasticsearch.action.simple
+org.xbib.elasticsearch.plugin.simple
