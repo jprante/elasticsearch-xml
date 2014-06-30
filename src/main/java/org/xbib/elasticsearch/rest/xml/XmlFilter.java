@@ -1,8 +1,6 @@
 
 package org.xbib.elasticsearch.rest.xml;
 
-import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.UnicodeUtil;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
@@ -12,15 +10,14 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.http.HttpChannel;
 import org.elasticsearch.http.HttpRequest;
+import org.elasticsearch.rest.BytesRestResponse;
 import org.elasticsearch.rest.RestChannel;
 import org.elasticsearch.rest.RestFilter;
 import org.elasticsearch.rest.RestFilterChain;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.RestResponse;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.rest.StringRestResponse;
 
-import org.elasticsearch.rest.Utf8RestResponse;
 import org.xbib.elasticsearch.common.xcontent.XmlXContentBuilder;
 import org.xbib.elasticsearch.common.xcontent.XmlXContentFactory;
 import org.xbib.elasticsearch.common.xcontent.XmlXContentType;
@@ -147,14 +144,15 @@ public class XmlFilter extends RestFilter {
      * Wraps a REST channel response into XML if Accept: header declares application/xml.
      * This must extend HttpChannel because this will get used in a casting in the HTTP controller.
      */
-    class XmlChannel implements HttpChannel {
+    class XmlChannel extends HttpChannel {
 
-        private final RestRequest request;
+        //private final RestRequest request;
 
         private final RestChannel channel;
 
         XmlChannel(RestRequest request, RestChannel channel) {
-            this.request = request;
+            super(request);
+            //this.request = request;
             this.channel = channel;
         }
 
@@ -166,7 +164,7 @@ public class XmlFilter extends RestFilter {
             if (isXml(request)) {
                 XContentParser parser = null;
                 try {
-                    byte[] b = response.content();
+                    byte[] b = response.content().array();
                     XContentType xContentType = XContentFactory.xContentType(b);
                     parser = XContentFactory.xContent(xContentType).createParser(b);
                     parser.nextToken();
@@ -179,7 +177,7 @@ public class XmlFilter extends RestFilter {
                     return;
                 } catch (Throwable e) {
                     logger.error(e.getMessage(), e);
-                    channel.sendResponse(new StringRestResponse(RestStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
+                    channel.sendResponse(new BytesRestResponse(RestStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
                     return;
                 } finally {
                     if (parser != null) {
@@ -191,20 +189,14 @@ public class XmlFilter extends RestFilter {
         }
     }
 
-    static class XmlRestResponse extends Utf8RestResponse {
+    static class XmlRestResponse extends BytesRestResponse {
 
         public XmlRestResponse(RestStatus status, String content) {
-            super(status, convert(content));
+            super(status, content);
         }
 
         public String contentType() {
             return "text/xml; charset=UTF-8";
-        }
-
-        private static BytesRef convert(String content) {
-            BytesRef result = new BytesRef();
-            UnicodeUtil.UTF16toUTF8(content, 0, content.length(), result);
-            return result;
         }
 
     }

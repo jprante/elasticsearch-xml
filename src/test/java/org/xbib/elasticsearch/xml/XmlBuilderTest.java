@@ -1,5 +1,5 @@
 
-package org.elasticsearch.common.xcontent;
+package org.xbib.elasticsearch.xml;
 
 import org.elasticsearch.common.io.Streams;
 import org.testng.Assert;

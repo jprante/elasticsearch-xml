@@ -1,5 +1,4 @@
-Elasticsearch XML Plugin
-========================
+# Elasticsearch XML Plugin
 
 The XML plugin for Elasticsearch is a simple REST filter for sending and receiving XML.
 
@@ -15,32 +14,34 @@ Because XML is more restrictive than JSON, do not assume that XML can server as 
 
 The JSON to XML conversion uses some tricks. Therefore you must not be surprised by edge cases where XML give peculiar results.
 
-Installation
-------------
+## Versions
 
-=============  ===========  =================  ===========================================================
-ES version     Plugin       Release date       Command
--------------  -----------  -----------------  -----------------------------------------------------------
-1.1.0          1.1.0.0      Apr 14, 2014        ./bin/plugin --install xml --url http://bit.ly/1kXqtqI
-=============  ===========  =================  ===========================================================
+| Elasticsearch version    | Plugin     | Release date |
+| ------------------------ | -----------| -------------|
+| 1.2.1                    | 1.2.1.0    | Jun 30, 2014 |
+
+
+## Checksum
+
+| File                                         | SHA1                                     |
+| ---------------------------------------------| -----------------------------------------|
+| elasticsearch-xml-1.2.1.0-plugin.zip         | 730bbc736df6acc7e33601d548e88834af78cfa9 |
+
+## Installation
+
+    ./bin/plugin --install xml --url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-xml/1.2.1.0/elasticsearch-xml-1.2.1.0-plugin.zip
+
 
 Do not forget to restart the node after installing.
 
-Project docs
-------------
+## Project docs
 
-The Maven project site is available at `Github <http://jprante.github.io/elasticsearch-xml>`_
-
-Binaries
---------
-
-Binaries are available at `Bintray <https://bintray.com/pkg/show/general/jprante/elasticsearch-plugins/elasticsearch-xml>`_
+The Maven project site is available at [Github](http://jprante.github.io/elasticsearch-xml)
 
 
-Examples
---------
+# Examples
 
-Consider the following JSON documents::
+Consider the following JSON documents
 
     curl '0:9200/_search?pretty'
     {
@@ -93,7 +94,7 @@ Consider the following JSON documents::
       }
     }
 
-The same in XML::
+The same in XML
 
     curl -H 'Accept: application/xml'  '0:9200/_search?pretty'
     <root xmlns="http://elasticsearch.org/ns/1.0/" xmlns:p="http://dummy.org">
@@ -179,8 +180,7 @@ As shown above, with the `@context` name in JSON, you can declare XML namespaces
 
 The `@context` is similar to JSON-LD's `@context` but not that powerful.
 
-XML Attributes
---------------
+## XML Attributes
 
 If JSON names are used with a `@` as starting letter, they will appear as XML attribute.
 
@@ -188,11 +188,11 @@ If XML attributes are passed in sending documents, they will appear as normal JS
 
 If nested XML do not lead to a proper JSON object, an empty JSON name is used, which might not be useful.
 
-Example::
+Example
 
     curl -XPOST -H 'Content-type: application/xml' '0:9200/a/c/1' -d '<root><name attr="test">value</name></root>'
 
-Result::
+Result
 
     curl '0:9200/a/c/1?pretty'
     {
@@ -203,11 +203,11 @@ Result::
       "found" : true, "_source" : {"name":{"attr":"test","":"value"}}
     }
 
-Another example::
+Another example
 
     curl -XPOST '0:9200/a/c/2' -d '{"test":{"@attr": "value"}}'
 
-Result::
+Result
 
     curl -H 'Accept: application/xml' '0:9200/a/c/2?pretty'
     <root xmlns="http://elasticsearch.org/ns/1.0/" xmlns:es="http://elasticsearch.org/ns/1.0/">
@@ -222,8 +222,7 @@ Result::
     </root>
 
 
-License
-=======
+# License
 
 Elasticsearch XML Plugin
 
