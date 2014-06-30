@@ -1,1 +1,2 @@
-org.elasticsearch.common.xcontent
+org.xbib.elasticsearch.integration
+org.xbib.elasticsearch.xml
