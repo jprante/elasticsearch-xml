@@ -1,0 +1,257 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a name="line.1"></a>
+<span class="sourceLineNo">002</span>package org.elasticsearch.common.xcontent;<a name="line.2"></a>
+<span class="sourceLineNo">003</span><a name="line.3"></a>
+<span class="sourceLineNo">004</span>import org.elasticsearch.common.io.Streams;<a name="line.4"></a>
+<span class="sourceLineNo">005</span>import org.testng.Assert;<a name="line.5"></a>
+<span class="sourceLineNo">006</span>import org.testng.annotations.Test;<a name="line.6"></a>
+<span class="sourceLineNo">007</span>import org.xbib.elasticsearch.common.xcontent.XmlXContentBuilder;<a name="line.7"></a>
+<span class="sourceLineNo">008</span>import org.xbib.elasticsearch.common.xcontent.XmlXContentHelper;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import org.xbib.elasticsearch.common.xcontent.xml.XmlNamespaceContext;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import org.xbib.elasticsearch.common.xcontent.xml.XmlXParams;<a name="line.10"></a>
+<span class="sourceLineNo">011</span><a name="line.11"></a>
+<span class="sourceLineNo">012</span>import javax.xml.namespace.QName;<a name="line.12"></a>
+<span class="sourceLineNo">013</span>import java.io.ByteArrayOutputStream;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import java.io.InputStream;<a name="line.14"></a>
+<span class="sourceLineNo">015</span><a name="line.15"></a>
+<span class="sourceLineNo">016</span>import static org.xbib.elasticsearch.common.xcontent.XmlXContentFactory.xmlBuilder;<a name="line.16"></a>
+<span class="sourceLineNo">017</span><a name="line.17"></a>
+<span class="sourceLineNo">018</span>public class XmlBuilderTest extends Assert {<a name="line.18"></a>
+<span class="sourceLineNo">019</span><a name="line.19"></a>
+<span class="sourceLineNo">020</span>    @Test<a name="line.20"></a>
+<span class="sourceLineNo">021</span>    public void testXml() throws Exception {<a name="line.21"></a>
+<span class="sourceLineNo">022</span>        XmlXContentBuilder builder = xmlBuilder();<a name="line.22"></a>
+<span class="sourceLineNo">023</span>        builder.startObject().field("Hello", "World").endObject();<a name="line.23"></a>
+<span class="sourceLineNo">024</span>        assertEquals(<a name="line.24"></a>
+<span class="sourceLineNo">025</span>                builder.string(),<a name="line.25"></a>
+<span class="sourceLineNo">026</span>                "&lt;root xmlns=\"http://elasticsearch.org/ns/1.0/\"&gt;&lt;Hello&gt;World&lt;/Hello&gt;&lt;/root&gt;"<a name="line.26"></a>
+<span class="sourceLineNo">027</span>        );<a name="line.27"></a>
+<span class="sourceLineNo">028</span>    }<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>    @Test<a name="line.30"></a>
+<span class="sourceLineNo">031</span>    public void testXmlParams() throws Exception {<a name="line.31"></a>
+<span class="sourceLineNo">032</span>        XmlXParams params = new XmlXParams();<a name="line.32"></a>
+<span class="sourceLineNo">033</span>        XmlXContentBuilder builder = xmlBuilder(params);<a name="line.33"></a>
+<span class="sourceLineNo">034</span>        builder.startObject().field("Hello", "World").endObject();<a name="line.34"></a>
+<span class="sourceLineNo">035</span>        assertEquals(<a name="line.35"></a>
+<span class="sourceLineNo">036</span>                builder.string(),<a name="line.36"></a>
+<span class="sourceLineNo">037</span>                "&lt;root xmlns=\"http://elasticsearch.org/ns/1.0/\"&gt;&lt;Hello&gt;World&lt;/Hello&gt;&lt;/root&gt;"<a name="line.37"></a>
+<span class="sourceLineNo">038</span>        );<a name="line.38"></a>
+<span class="sourceLineNo">039</span>    }<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>    @Test<a name="line.41"></a>
+<span class="sourceLineNo">042</span>    public void testXmlNamespaces() throws Exception {<a name="line.42"></a>
+<span class="sourceLineNo">043</span>        XmlNamespaceContext context = XmlNamespaceContext.getDefaultInstance();<a name="line.43"></a>
+<span class="sourceLineNo">044</span>        XmlXParams params = new XmlXParams(context);<a name="line.44"></a>
+<span class="sourceLineNo">045</span>        XmlXContentBuilder builder = xmlBuilder(params);<a name="line.45"></a>
+<span class="sourceLineNo">046</span>        builder.startObject()<a name="line.46"></a>
+<span class="sourceLineNo">047</span>                .field("dc:creator", "John Doe")<a name="line.47"></a>
+<span class="sourceLineNo">048</span>                .endObject();<a name="line.48"></a>
+<span class="sourceLineNo">049</span>        assertEquals(<a name="line.49"></a>
+<span class="sourceLineNo">050</span>                builder.string(),<a name="line.50"></a>
+<span class="sourceLineNo">051</span>                "&lt;root xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:atom=\"http://www.w3.org/2005/Atom\" " +<a name="line.51"></a>
+<span class="sourceLineNo">052</span>                        "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" " +<a name="line.52"></a>
+<span class="sourceLineNo">053</span>                        "xmlns:dcterms=\"http://purl.org/dc/terms/\" " +<a name="line.53"></a>
+<span class="sourceLineNo">054</span>                        "xmlns:es=\"http://elasticsearch.org/ns/1.0/\" " +<a name="line.54"></a>
+<span class="sourceLineNo">055</span>                        "xmlns:foaf=\"http://xmlns.com/foaf/0.1/\" xmlns:owl=\"http://www.w3.org/2002/07/owl#\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\" xmlns:xalan=\"http://xml.apache.org/xslt\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"&gt;&lt;dc:creator&gt;John Doe&lt;/dc:creator&gt;&lt;/root&gt;"<a name="line.55"></a>
+<span class="sourceLineNo">056</span>        );<a name="line.56"></a>
+<span class="sourceLineNo">057</span>    }<a name="line.57"></a>
+<span class="sourceLineNo">058</span><a name="line.58"></a>
+<span class="sourceLineNo">059</span>    @Test<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    public void testXmlCustomNamespaces() throws Exception {<a name="line.60"></a>
+<span class="sourceLineNo">061</span>        QName root = new QName("http://elasticsearch.org/ns/1.0/", "result", "");<a name="line.61"></a>
+<span class="sourceLineNo">062</span>        XmlNamespaceContext context = XmlNamespaceContext.getDefaultInstance();<a name="line.62"></a>
+<span class="sourceLineNo">063</span>        context.addNamespace("abc", "http://localhost");<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        XmlXParams params = new XmlXParams(root, context);<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        XmlXContentBuilder builder = xmlBuilder(params);<a name="line.65"></a>
+<span class="sourceLineNo">066</span>        builder.startObject()<a name="line.66"></a>
+<span class="sourceLineNo">067</span>                .field("abc:creator", "John Doe")<a name="line.67"></a>
+<span class="sourceLineNo">068</span>                .endObject();<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        assertEquals(<a name="line.69"></a>
+<span class="sourceLineNo">070</span>                builder.string(),<a name="line.70"></a>
+<span class="sourceLineNo">071</span>                "&lt;result xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:abc=\"http://localhost\" " +<a name="line.71"></a>
+<span class="sourceLineNo">072</span>                        "xmlns:atom=\"http://www.w3.org/2005/Atom\" " +<a name="line.72"></a>
+<span class="sourceLineNo">073</span>                        "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" " +<a name="line.73"></a>
+<span class="sourceLineNo">074</span>                        "xmlns:dcterms=\"http://purl.org/dc/terms/\" " +<a name="line.74"></a>
+<span class="sourceLineNo">075</span>                        "xmlns:es=\"http://elasticsearch.org/ns/1.0/\" " +<a name="line.75"></a>
+<span class="sourceLineNo">076</span>                        "xmlns:foaf=\"http://xmlns.com/foaf/0.1/\" xmlns:owl=\"http://www.w3.org/2002/07/owl#\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\" xmlns:xalan=\"http://xml.apache.org/xslt\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"&gt;&lt;abc:creator&gt;John Doe&lt;/abc:creator&gt;&lt;/result&gt;"<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        );<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    }<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>    @Test<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    public void testXmlObject() throws Exception {<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        XmlXParams params = new XmlXParams();<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        XmlXContentBuilder builder = xmlBuilder(params);<a name="line.83"></a>
+<span class="sourceLineNo">084</span>        builder.startObject()<a name="line.84"></a>
+<span class="sourceLineNo">085</span>                .startObject("author")<a name="line.85"></a>
+<span class="sourceLineNo">086</span>                .field("creator", "John Doe")<a name="line.86"></a>
+<span class="sourceLineNo">087</span>                .field("role", "writer")<a name="line.87"></a>
+<span class="sourceLineNo">088</span>                .endObject()<a name="line.88"></a>
+<span class="sourceLineNo">089</span>                .startObject("author")<a name="line.89"></a>
+<span class="sourceLineNo">090</span>                .field("creator", "Joe Smith")<a name="line.90"></a>
+<span class="sourceLineNo">091</span>                .field("role", "illustrator")<a name="line.91"></a>
+<span class="sourceLineNo">092</span>                .endObject()<a name="line.92"></a>
+<span class="sourceLineNo">093</span>                .endObject();<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        assertEquals(<a name="line.94"></a>
+<span class="sourceLineNo">095</span>                builder.string(),<a name="line.95"></a>
+<span class="sourceLineNo">096</span>                "&lt;root xmlns=\"http://elasticsearch.org/ns/1.0/\"&gt;&lt;author&gt;&lt;creator&gt;John Doe&lt;/creator&gt;&lt;role&gt;writer&lt;/role&gt;&lt;/author&gt;&lt;author&gt;&lt;creator&gt;Joe Smith&lt;/creator&gt;&lt;role&gt;illustrator&lt;/role&gt;&lt;/author&gt;&lt;/root&gt;"<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        );<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    }<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>    @Test<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    public void testXmlAttributes() throws Exception {<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        XmlNamespaceContext namespaceContext = XmlNamespaceContext.newInstance();<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        namespaceContext.addNamespace("es", "http://elasticsearch.org/ns/1.0/");<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        XmlXParams params = new XmlXParams(namespaceContext);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        XmlXContentBuilder builder = xmlBuilder(params);<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        builder.startObject()<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                .startObject("author")<a name="line.108"></a>
+<span class="sourceLineNo">109</span>                .field("@name", "John Doe")<a name="line.109"></a>
+<span class="sourceLineNo">110</span>                .field("@id", 1)<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                .endObject()<a name="line.111"></a>
+<span class="sourceLineNo">112</span>                .endObject();<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        assertEquals(<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                builder.string(),<a name="line.114"></a>
+<span class="sourceLineNo">115</span>                "&lt;root xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:es=\"http://elasticsearch.org/ns/1.0/\"&gt;&lt;author es:name=\"John Doe\" es:id=\"1\"/&gt;&lt;/root&gt;"<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        );<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    }<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    @Test<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    public void testXmlArrayOfValues() throws Exception {<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        XmlXParams params = new XmlXParams();<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        XmlXContentBuilder builder = xmlBuilder(params);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        builder.startObject()<a name="line.123"></a>
+<span class="sourceLineNo">124</span>                .array("author", "John Doe", "Joe Smith")<a name="line.124"></a>
+<span class="sourceLineNo">125</span>                .endObject();<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        assertEquals(<a name="line.126"></a>
+<span class="sourceLineNo">127</span>                builder.string(),<a name="line.127"></a>
+<span class="sourceLineNo">128</span>                "&lt;root xmlns=\"http://elasticsearch.org/ns/1.0/\"&gt;&lt;author&gt;John Doe&lt;/author&gt;&lt;author&gt;Joe Smith&lt;/author&gt;&lt;/root&gt;"<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        );<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    }<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    @Test<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    public void testXmlArrayOfObjects() throws Exception {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        XmlXParams params = new XmlXParams();<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        XmlXContentBuilder builder = xmlBuilder(params);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        builder.startObject()<a name="line.136"></a>
+<span class="sourceLineNo">137</span>                .startArray("author")<a name="line.137"></a>
+<span class="sourceLineNo">138</span>                .startObject()<a name="line.138"></a>
+<span class="sourceLineNo">139</span>                .field("creator", "John Doe")<a name="line.139"></a>
+<span class="sourceLineNo">140</span>                .field("role", "writer")<a name="line.140"></a>
+<span class="sourceLineNo">141</span>                .endObject()<a name="line.141"></a>
+<span class="sourceLineNo">142</span>                .startObject()<a name="line.142"></a>
+<span class="sourceLineNo">143</span>                .field("creator", "Joe Smith")<a name="line.143"></a>
+<span class="sourceLineNo">144</span>                .field("role", "illustrator")<a name="line.144"></a>
+<span class="sourceLineNo">145</span>                .endObject()<a name="line.145"></a>
+<span class="sourceLineNo">146</span>                .endArray()<a name="line.146"></a>
+<span class="sourceLineNo">147</span>                .endObject();<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        assertEquals(<a name="line.148"></a>
+<span class="sourceLineNo">149</span>                "&lt;root xmlns=\"http://elasticsearch.org/ns/1.0/\"&gt;&lt;author&gt;&lt;creator&gt;John Doe&lt;/creator&gt;&lt;role&gt;writer&lt;/role&gt;&lt;/author&gt;&lt;author&gt;&lt;creator&gt;Joe Smith&lt;/creator&gt;&lt;role&gt;illustrator&lt;/role&gt;&lt;/author&gt;&lt;/root&gt;",<a name="line.149"></a>
+<span class="sourceLineNo">150</span>                builder.string()<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        );<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    }<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span>    @Test<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    public void testParseJson() throws Exception {<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        XmlNamespaceContext context = XmlNamespaceContext.getDefaultInstance();<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        context.addNamespace("bib","info:srw/cql-context-set/1/bib-v1/");<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        context.addNamespace("abc", "http://localhost/");<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        context.addNamespace("xbib", "http://xbib.org/");<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        context.addNamespace("lia", "http://xbib.org/namespaces/lia/");<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        XmlXParams params = new XmlXParams(context);<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        InputStream in = getClass().getResourceAsStream("/test.json");<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        ByteArrayOutputStream out = new ByteArrayOutputStream();<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        Streams.copy(in, out);<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        byte[] buf = out.toByteArray();<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        String s = XmlXContentHelper.convertToXml(params, buf, 0, buf.length, false);<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        assertEquals(53194, s.length());<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    }<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    @Test<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    public void testDynamicNamespaces() throws Exception {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        XmlNamespaceContext context = XmlNamespaceContext.getDefaultInstance();<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        XmlXParams params = new XmlXParams(context);<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        InputStream in = getClass().getResourceAsStream("/dynamic-namespace.json");<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        ByteArrayOutputStream out = new ByteArrayOutputStream();<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        Streams.copy(in, out);<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        byte[] buf = out.toByteArray();<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        String s = XmlXContentHelper.convertToXml(params, buf, 0, buf.length, false);<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        assertEquals(<a name="line.179"></a>
+<span class="sourceLineNo">180</span>            "&lt;root xmlns=\"http://elasticsearch.org/ns/1.0/\" xmlns:atom=\"http://www.w3.org/2005/Atom\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:dcterms=\"http://purl.org/dc/terms/\" xmlns:es=\"http://elasticsearch.org/ns/1.0/\" xmlns:foaf=\"http://xmlns.com/foaf/0.1/\" xmlns:owl=\"http://www.w3.org/2002/07/owl#\" xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\" xmlns:xalan=\"http://xml.apache.org/xslt\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"&gt;&lt;context es:ns=\"http://example.org/\" xmlns:ns=\"http://example.org/\"/&gt;&lt;wstxns1:foo xmlns:wstxns1=\"http://example.org/\"&gt;bar&lt;/wstxns1:foo&gt;&lt;/root&gt;",<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            s<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        );<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    }<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>}<a name="line.185"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a name="line.1"></a>
+<span class="sourceLineNo">002</span>package org.xbib.elasticsearch.common.xcontent;<a name="line.2"></a>
+<span class="sourceLineNo">003</span><a name="line.3"></a>
+<span class="sourceLineNo">004</span>import org.elasticsearch.ElasticsearchParseException;<a name="line.4"></a>
+<span class="sourceLineNo">005</span>import org.elasticsearch.common.base.Charsets;<a name="line.5"></a>
+<span class="sourceLineNo">006</span>import org.elasticsearch.common.bytes.BytesArray;<a name="line.6"></a>
+<span class="sourceLineNo">007</span>import org.elasticsearch.common.bytes.BytesReference;<a name="line.7"></a>
+<span class="sourceLineNo">008</span>import org.elasticsearch.common.collect.Maps;<a name="line.8"></a>
+<span class="sourceLineNo">009</span>import org.elasticsearch.common.collect.Tuple;<a name="line.9"></a>
+<span class="sourceLineNo">010</span>import org.elasticsearch.common.compress.CompressedStreamInput;<a name="line.10"></a>
+<span class="sourceLineNo">011</span>import org.elasticsearch.common.compress.Compressor;<a name="line.11"></a>
+<span class="sourceLineNo">012</span>import org.elasticsearch.common.compress.CompressorFactory;<a name="line.12"></a>
+<span class="sourceLineNo">013</span>import org.elasticsearch.common.io.stream.BytesStreamInput;<a name="line.13"></a>
+<span class="sourceLineNo">014</span>import org.elasticsearch.common.xcontent.XContentGenerator;<a name="line.14"></a>
+<span class="sourceLineNo">015</span>import org.elasticsearch.common.xcontent.XContentParser;<a name="line.15"></a>
+<span class="sourceLineNo">016</span><a name="line.16"></a>
+<span class="sourceLineNo">017</span>import org.xbib.elasticsearch.common.xcontent.xml.XmlXParams;<a name="line.17"></a>
+<span class="sourceLineNo">018</span><a name="line.18"></a>
+<span class="sourceLineNo">019</span>import java.io.IOException;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import java.util.ArrayList;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import java.util.List;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import java.util.Map;<a name="line.22"></a>
+<span class="sourceLineNo">023</span><a name="line.23"></a>
+<span class="sourceLineNo">024</span>/**<a name="line.24"></a>
+<span class="sourceLineNo">025</span> *<a name="line.25"></a>
+<span class="sourceLineNo">026</span> */<a name="line.26"></a>
+<span class="sourceLineNo">027</span>public class XmlXContentHelper {<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>    public static XContentParser createParser(BytesReference bytes) throws IOException {<a name="line.29"></a>
+<span class="sourceLineNo">030</span>        if (bytes.hasArray()) {<a name="line.30"></a>
+<span class="sourceLineNo">031</span>            return createParser(bytes.array(), bytes.arrayOffset(), bytes.length());<a name="line.31"></a>
+<span class="sourceLineNo">032</span>        }<a name="line.32"></a>
+<span class="sourceLineNo">033</span>        Compressor compressor = CompressorFactory.compressor(bytes);<a name="line.33"></a>
+<span class="sourceLineNo">034</span>        if (compressor != null) {<a name="line.34"></a>
+<span class="sourceLineNo">035</span>            CompressedStreamInput compressedInput = compressor.streamInput(bytes.streamInput());<a name="line.35"></a>
+<span class="sourceLineNo">036</span>            XmlXContentType contentType = XmlXContentFactory.xContentType(compressedInput);<a name="line.36"></a>
+<span class="sourceLineNo">037</span>            compressedInput.resetToBufferStart();<a name="line.37"></a>
+<span class="sourceLineNo">038</span>            return XmlXContentFactory.xContent(contentType).createParser(compressedInput);<a name="line.38"></a>
+<span class="sourceLineNo">039</span>        } else {<a name="line.39"></a>
+<span class="sourceLineNo">040</span>            return XmlXContentFactory.xContent(bytes).createParser(bytes.streamInput());<a name="line.40"></a>
+<span class="sourceLineNo">041</span>        }<a name="line.41"></a>
+<span class="sourceLineNo">042</span>    }<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span>    public static XContentParser createParser(byte[] data, int offset, int length) throws IOException {<a name="line.44"></a>
+<span class="sourceLineNo">045</span>        Compressor compressor = CompressorFactory.compressor(data, offset, length);<a name="line.45"></a>
+<span class="sourceLineNo">046</span>        if (compressor != null) {<a name="line.46"></a>
+<span class="sourceLineNo">047</span>            CompressedStreamInput compressedInput = compressor.streamInput(new BytesStreamInput(data, offset, length, false));<a name="line.47"></a>
+<span class="sourceLineNo">048</span>            XmlXContentType contentType = XmlXContentFactory.xContentType(compressedInput);<a name="line.48"></a>
+<span class="sourceLineNo">049</span>            compressedInput.resetToBufferStart();<a name="line.49"></a>
+<span class="sourceLineNo">050</span>            return XmlXContentFactory.xContent(contentType).createParser(compressedInput);<a name="line.50"></a>
+<span class="sourceLineNo">051</span>        } else {<a name="line.51"></a>
+<span class="sourceLineNo">052</span>            return XmlXContentFactory.xContent(data, offset, length).createParser(data, offset, length);<a name="line.52"></a>
+<span class="sourceLineNo">053</span>        }<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    }<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>    public static Tuple&lt;XmlXContentType, Map&lt;String, Object&gt;&gt; convertToMap(BytesReference bytes, boolean ordered)<a name="line.56"></a>
+<span class="sourceLineNo">057</span>            throws ElasticsearchParseException {<a name="line.57"></a>
+<span class="sourceLineNo">058</span>        if (bytes.hasArray()) {<a name="line.58"></a>
+<span class="sourceLineNo">059</span>            return convertToMap(bytes.array(), bytes.arrayOffset(), bytes.length(), ordered);<a name="line.59"></a>
+<span class="sourceLineNo">060</span>        }<a name="line.60"></a>
+<span class="sourceLineNo">061</span>        try {<a name="line.61"></a>
+<span class="sourceLineNo">062</span>            XContentParser parser;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>            XmlXContentType contentType;<a name="line.63"></a>
+<span class="sourceLineNo">064</span>            Compressor compressor = CompressorFactory.compressor(bytes);<a name="line.64"></a>
+<span class="sourceLineNo">065</span>            if (compressor != null) {<a name="line.65"></a>
+<span class="sourceLineNo">066</span>                CompressedStreamInput compressedStreamInput = compressor.streamInput(bytes.streamInput());<a name="line.66"></a>
+<span class="sourceLineNo">067</span>                contentType = XmlXContentFactory.xContentType(compressedStreamInput);<a name="line.67"></a>
+<span class="sourceLineNo">068</span>                compressedStreamInput.resetToBufferStart();<a name="line.68"></a>
+<span class="sourceLineNo">069</span>                parser = XmlXContentFactory.xContent(contentType).createParser(compressedStreamInput);<a name="line.69"></a>
+<span class="sourceLineNo">070</span>            } else {<a name="line.70"></a>
+<span class="sourceLineNo">071</span>                contentType = XmlXContentFactory.xContentType(bytes);<a name="line.71"></a>
+<span class="sourceLineNo">072</span>                parser = XmlXContentFactory.xContent(contentType).createParser(bytes.streamInput());<a name="line.72"></a>
+<span class="sourceLineNo">073</span>            }<a name="line.73"></a>
+<span class="sourceLineNo">074</span>            if (ordered) {<a name="line.74"></a>
+<span class="sourceLineNo">075</span>                return Tuple.tuple(contentType, parser.mapOrderedAndClose());<a name="line.75"></a>
+<span class="sourceLineNo">076</span>            } else {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>                return Tuple.tuple(contentType, parser.mapAndClose());<a name="line.77"></a>
+<span class="sourceLineNo">078</span>            }<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        } catch (IOException e) {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>            throw new ElasticsearchParseException("Failed to parse content to map", e);<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        }<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    }<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    public static Tuple&lt;XmlXContentType, Map&lt;String, Object&gt;&gt; convertToMap(byte[] data, boolean ordered)<a name="line.84"></a>
+<span class="sourceLineNo">085</span>            throws ElasticsearchParseException {<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        return convertToMap(data, 0, data.length, ordered);<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    }<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    public static Tuple&lt;XmlXContentType, Map&lt;String, Object&gt;&gt; convertToMap(byte[] data, int offset, int length, boolean ordered)<a name="line.89"></a>
+<span class="sourceLineNo">090</span>            throws ElasticsearchParseException {<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        try {<a name="line.91"></a>
+<span class="sourceLineNo">092</span>            XContentParser parser;<a name="line.92"></a>
+<span class="sourceLineNo">093</span>            XmlXContentType contentType;<a name="line.93"></a>
+<span class="sourceLineNo">094</span>            Compressor compressor = CompressorFactory.compressor(data, offset, length);<a name="line.94"></a>
+<span class="sourceLineNo">095</span>            if (compressor != null) {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>                CompressedStreamInput compressedStreamInput = compressor.streamInput(new BytesStreamInput(data, offset, length, false));<a name="line.96"></a>
+<span class="sourceLineNo">097</span>                contentType = XmlXContentFactory.xContentType(compressedStreamInput);<a name="line.97"></a>
+<span class="sourceLineNo">098</span>                compressedStreamInput.resetToBufferStart();<a name="line.98"></a>
+<span class="sourceLineNo">099</span>                parser = XmlXContentFactory.xContent(contentType).createParser(compressedStreamInput);<a name="line.99"></a>
+<span class="sourceLineNo">100</span>            } else {<a name="line.100"></a>
+<span class="sourceLineNo">101</span>                contentType = XmlXContentFactory.xContentType(data, offset, length);<a name="line.101"></a>
+<span class="sourceLineNo">102</span>                parser = XmlXContentFactory.xContent(contentType).createParser(data, offset, length);<a name="line.102"></a>
+<span class="sourceLineNo">103</span>            }<a name="line.103"></a>
+<span class="sourceLineNo">104</span>            if (ordered) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>                return Tuple.tuple(contentType, parser.mapOrderedAndClose());<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            } else {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                return Tuple.tuple(contentType, parser.mapAndClose());<a name="line.107"></a>
+<span class="sourceLineNo">108</span>            }<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        } catch (IOException e) {<a name="line.109"></a>
+<span class="sourceLineNo">110</span>            throw new ElasticsearchParseException("Failed to parse content to map", e);<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        }<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    }<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    public static String convertToJson(BytesReference bytes, boolean reformatJson) throws IOException {<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        return convertToJson(bytes, reformatJson, false);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    }<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>    public static String convertToJson(BytesReference bytes, boolean reformatJson, boolean prettyPrint) throws IOException {<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        if (bytes.hasArray()) {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>            return convertToJson(bytes.array(), bytes.arrayOffset(), bytes.length(), reformatJson, prettyPrint);<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        }<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        XmlXContentType xmlXContentType = XmlXContentFactory.xContentType(bytes);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        if (xmlXContentType == XmlXContentType.JSON &amp;&amp; !reformatJson) {<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            BytesArray bytesArray = bytes.toBytesArray();<a name="line.124"></a>
+<span class="sourceLineNo">125</span>            return new String(bytesArray.array(), bytesArray.arrayOffset(), bytesArray.length(), Charsets.UTF_8);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        }<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        XContentParser parser = null;<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        try {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>            parser = XmlXContentFactory.xContent(xmlXContentType).createParser(bytes.streamInput());<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            parser.nextToken();<a name="line.130"></a>
+<span class="sourceLineNo">131</span>            XmlXContentBuilder builder = XmlXContentFactory.jsonBuilder();<a name="line.131"></a>
+<span class="sourceLineNo">132</span>            if (prettyPrint) {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>                builder.prettyPrint();<a name="line.133"></a>
+<span class="sourceLineNo">134</span>            }<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            builder.copyCurrentStructure(parser);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>            return builder.string();<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        } finally {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>            if (parser != null) {<a name="line.138"></a>
+<span class="sourceLineNo">139</span>                parser.close();<a name="line.139"></a>
+<span class="sourceLineNo">140</span>            }<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        }<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    }<a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>    public static String convertToJson(byte[] data, int offset, int length, boolean reformatJson) throws IOException {<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        return convertToJson(data, offset, length, reformatJson, false);<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    }<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>    public static String convertToJson(byte[] data, int offset, int length, boolean reformatJson, boolean prettyPrint) throws IOException {<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        XmlXContentType xmlXContentType = XmlXContentFactory.xContentType(data, offset, length);<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        if (xmlXContentType == XmlXContentType.JSON &amp;&amp; !reformatJson) {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>            return new String(data, offset, length, Charsets.UTF_8);<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        }<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        XContentParser parser = null;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        try {<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            parser = XmlXContentFactory.xContent(xmlXContentType).createParser(data, offset, length);<a name="line.155"></a>
+<span class="sourceLineNo">156</span>            parser.nextToken();<a name="line.156"></a>
+<span class="sourceLineNo">157</span>            XmlXContentBuilder builder = XmlXContentFactory.jsonBuilder();<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            if (prettyPrint) {<a name="line.158"></a>
+<span class="sourceLineNo">159</span>                builder.prettyPrint();<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            }<a name="line.160"></a>
+<span class="sourceLineNo">161</span>            builder.copyCurrentStructure(parser);<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            return builder.string();<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        } finally {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            if (parser != null) {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>                parser.close();<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            }<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        }<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    }<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    public static String convertToXml(XmlXParams params, byte[] data, int offset, int length) throws IOException {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        return convertToXml(params, data, offset, length, false);<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    }<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>    public static String convertToXml(XmlXParams params, byte[] data, int offset, int length, boolean prettyPrint) throws IOException {<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        XmlXContentType xmlXContentType = XmlXContentFactory.xContentType(data, offset, length);<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        XContentParser parser = null;<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        try {<a name="line.177"></a>
+<span class="sourceLineNo">178</span>            parser = XmlXContentFactory.xContent(xmlXContentType).createParser(data, offset, length);<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            parser.nextToken();<a name="line.179"></a>
+<span class="sourceLineNo">180</span>            XmlXContentBuilder builder = XmlXContentFactory.xmlBuilder(params);<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            if (prettyPrint) {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>                builder.prettyPrint();<a name="line.182"></a>
+<span class="sourceLineNo">183</span>            }<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            builder.copyCurrentStructure(parser);<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            return builder.string();<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        } finally {<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            if (parser != null) {<a name="line.187"></a>
+<span class="sourceLineNo">188</span>                parser.close();<a name="line.188"></a>
+<span class="sourceLineNo">189</span>            }<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        }<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    }<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>    /**<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * Updates the provided changes into the source. If the key exists in the changes, it overrides the one in source<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * unless both are Maps, in which case it recuersively updated it.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     */<a name="line.196"></a>
+<span class="sourceLineNo">197</span>    public static void update(Map&lt;String, Object&gt; source, Map&lt;String, Object&gt; changes) {<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        for (Map.Entry&lt;String, Object&gt; changesEntry : changes.entrySet()) {<a name="line.198"></a>
+<span class="sourceLineNo">199</span>            if (!source.containsKey(changesEntry.getKey())) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>                // safe to copy, change does not exist in source<a name="line.200"></a>
+<span class="sourceLineNo">201</span>                source.put(changesEntry.getKey(), changesEntry.getValue());<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            } else {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>                if (source.get(changesEntry.getKey()) instanceof Map &amp;&amp; changesEntry.getValue() instanceof Map) {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>                    // recursive merge maps<a name="line.204"></a>
+<span class="sourceLineNo">205</span>                    update((Map&lt;String, Object&gt;) source.get(changesEntry.getKey()), (Map&lt;String, Object&gt;) changesEntry.getValue());<a name="line.205"></a>
+<span class="sourceLineNo">206</span>                } else {<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                    // update the field<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                    source.put(changesEntry.getKey(), changesEntry.getValue());<a name="line.208"></a>
+<span class="sourceLineNo">209</span>                }<a name="line.209"></a>
+<span class="sourceLineNo">210</span>            }<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        }<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    }<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>    /**<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * Merges the defaults provided as the second parameter into the content of the first. Only does recursive merge<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * for inner maps.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     */<a name="line.217"></a>
+<span class="sourceLineNo">218</span>    @SuppressWarnings({"unchecked"})<a name="line.218"></a>
+<span class="sourceLineNo">219</span>    public static void mergeDefaults(Map&lt;String, Object&gt; content, Map&lt;String, Object&gt; defaults) {<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        for (Map.Entry&lt;String, Object&gt; defaultEntry : defaults.entrySet()) {<a name="line.220"></a>
+<span class="sourceLineNo">221</span>            if (!content.containsKey(defaultEntry.getKey())) {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>                // copy it over, it does not exists in the content<a name="line.222"></a>
+<span class="sourceLineNo">223</span>                content.put(defaultEntry.getKey(), defaultEntry.getValue());<a name="line.223"></a>
+<span class="sourceLineNo">224</span>            } else {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                // in the content and in the default, only merge compound ones (maps)<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                if (content.get(defaultEntry.getKey()) instanceof Map &amp;&amp; defaultEntry.getValue() instanceof Map) {<a name="line.226"></a>
+<span class="sourceLineNo">227</span>                    mergeDefaults((Map&lt;String, Object&gt;) content.get(defaultEntry.getKey()), (Map&lt;String, Object&gt;) defaultEntry.getValue());<a name="line.227"></a>
+<span class="sourceLineNo">228</span>                } else if (content.get(defaultEntry.getKey()) instanceof List &amp;&amp; defaultEntry.getValue() instanceof List) {<a name="line.228"></a>
+<span class="sourceLineNo">229</span>                    List defaultList = (List) defaultEntry.getValue();<a name="line.229"></a>
+<span class="sourceLineNo">230</span>                    List contentList = (List) content.get(defaultEntry.getKey());<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>                    List mergedList = new ArrayList();<a name="line.232"></a>
+<span class="sourceLineNo">233</span>                    if (allListValuesAreMapsOfOne(defaultList) &amp;&amp; allListValuesAreMapsOfOne(contentList)) {<a name="line.233"></a>
+<span class="sourceLineNo">234</span>                        // all are in the form of [ {"key1" : {}}, {"key2" : {}} ], merge based on keys<a name="line.234"></a>
+<span class="sourceLineNo">235</span>                        Map&lt;String, Map&lt;String, Object&gt;&gt; processed = Maps.newLinkedHashMap();<a name="line.235"></a>
+<span class="sourceLineNo">236</span>                        for (Object o : contentList) {<a name="line.236"></a>
+<span class="sourceLineNo">237</span>                            Map&lt;String, Object&gt; map = (Map&lt;String, Object&gt;) o;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>                            Map.Entry&lt;String, Object&gt; entry = map.entrySet().iterator().next();<a name="line.238"></a>
+<span class="sourceLineNo">239</span>                            processed.put(entry.getKey(), map);<a name="line.239"></a>
+<span class="sourceLineNo">240</span>                        }<a name="line.240"></a>
+<span class="sourceLineNo">241</span>                        for (Object o : defaultList) {<a name="line.241"></a>
+<span class="sourceLineNo">242</span>                            Map&lt;String, Object&gt; map = (Map&lt;String, Object&gt;) o;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                            Map.Entry&lt;String, Object&gt; entry = map.entrySet().iterator().next();<a name="line.243"></a>
+<span class="sourceLineNo">244</span>                            if (processed.containsKey(entry.getKey())) {<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                                mergeDefaults(processed.get(entry.getKey()), map);<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                            }<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                        }<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                        for (Map&lt;String, Object&gt; map : processed.values()) {<a name="line.248"></a>
+<span class="sourceLineNo">249</span>                            mergedList.add(map);<a name="line.249"></a>
+<span class="sourceLineNo">250</span>                        }<a name="line.250"></a>
+<span class="sourceLineNo">251</span>                    } else {<a name="line.251"></a>
+<span class="sourceLineNo">252</span>                        // if both are lists, simply combine them, first the defaults, then the content<a name="line.252"></a>
+<span class="sourceLineNo">253</span>                        // just make sure not to add the same value twice<a name="line.253"></a>
+<span class="sourceLineNo">254</span>                        mergedList.addAll(defaultList);<a name="line.254"></a>
+<span class="sourceLineNo">255</span>                        for (Object o : contentList) {<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                            if (!mergedList.contains(o)) {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                                mergedList.add(o);<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                            }<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                        }<a name="line.259"></a>
+<span class="sourceLineNo">260</span>                    }<a name="line.260"></a>
+<span class="sourceLineNo">261</span>                    content.put(defaultEntry.getKey(), mergedList);<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                }<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            }<a name="line.263"></a>
+<span class="sourceLineNo">264</span>        }<a name="line.264"></a>
+<span class="sourceLineNo">265</span>    }<a name="line.265"></a>
+<span class="sourceLineNo">266</span><a name="line.266"></a>
+<span class="sourceLineNo">267</span>    private static boolean allListValuesAreMapsOfOne(List list) {<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        for (Object o : list) {<a name="line.268"></a>
+<span class="sourceLineNo">269</span>            if (!(o instanceof Map)) {<a name="line.269"></a>
+<span class="sourceLineNo">270</span>                return false;<a name="line.270"></a>
+<span class="sourceLineNo">271</span>            }<a name="line.271"></a>
+<span class="sourceLineNo">272</span>            if (((Map) o).size() != 1) {<a name="line.272"></a>
+<span class="sourceLineNo">273</span>                return false;<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            }<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        }<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        return true;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    }<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span>    public static void copyCurrentStructure(XContentGenerator generator, XContentParser parser) throws IOException {<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        XContentParser.Token t = parser.currentToken();<a name="line.280"></a>
+<span class="sourceLineNo">281</span><a name="line.281"></a>
+<span class="sourceLineNo">282</span>        // Let's handle field-name separately first<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        if (t == XContentParser.Token.FIELD_NAME) {<a name="line.283"></a>
+<span class="sourceLineNo">284</span>            generator.writeFieldName(parser.currentName());<a name="line.284"></a>
+<span class="sourceLineNo">285</span>            t = parser.nextToken();<a name="line.285"></a>
+<span class="sourceLineNo">286</span>            // fall-through to copy the associated value<a name="line.286"></a>
+<span class="sourceLineNo">287</span>        }<a name="line.287"></a>
+<span class="sourceLineNo">288</span><a name="line.288"></a>
+<span class="sourceLineNo">289</span>        switch (t) {<a name="line.289"></a>
+<span class="sourceLineNo">290</span>            case START_ARRAY:<a name="line.290"></a>
+<span class="sourceLineNo">291</span>                generator.writeStartArray();<a name="line.291"></a>
+<span class="sourceLineNo">292</span>                while (parser.nextToken() != XContentParser.Token.END_ARRAY) {<a name="line.292"></a>
+<span class="sourceLineNo">293</span>                    copyCurrentStructure(generator, parser);<a name="line.293"></a>
+<span class="sourceLineNo">294</span>                }<a name="line.294"></a>
+<span class="sourceLineNo">295</span>                generator.writeEndArray();<a name="line.295"></a>
+<span class="sourceLineNo">296</span>                break;<a name="line.296"></a>
+<span class="sourceLineNo">297</span>            case START_OBJECT:<a name="line.297"></a>
+<span class="sourceLineNo">298</span>                generator.writeStartObject();<a name="line.298"></a>
+<span class="sourceLineNo">299</span>                while (parser.nextToken() != XContentParser.Token.END_OBJECT) {<a name="line.299"></a>
+<span class="sourceLineNo">300</span>                    copyCurrentStructure(generator, parser);<a name="line.300"></a>
+<span class="sourceLineNo">301</span>                }<a name="line.301"></a>
+<span class="sourceLineNo">302</span>                generator.writeEndObject();<a name="line.302"></a>
+<span class="sourceLineNo">303</span>                break;<a name="line.303"></a>
+<span class="sourceLineNo">304</span>            default: // others are simple:<a name="line.304"></a>
+<span class="sourceLineNo">305</span>                copyCurrentEvent(generator, parser);<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        }<a name="line.306"></a>
+<span class="sourceLineNo">307</span>    }<a name="line.307"></a>
+<span class="sourceLineNo">308</span><a name="line.308"></a>
+<span class="sourceLineNo">309</span>    public static void copyCurrentEvent(XContentGenerator generator, XContentParser parser) throws IOException {<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        switch (parser.currentToken()) {<a name="line.310"></a>
+<span class="sourceLineNo">311</span>            case START_OBJECT:<a name="line.311"></a>
+<span class="sourceLineNo">312</span>                generator.writeStartObject();<a name="line.312"></a>
+<span class="sourceLineNo">313</span>                break;<a name="line.313"></a>
+<span class="sourceLineNo">314</span>            case END_OBJECT:<a name="line.314"></a>
+<span class="sourceLineNo">315</span>                generator.writeEndObject();<a name="line.315"></a>
+<span class="sourceLineNo">316</span>                break;<a name="line.316"></a>
+<span class="sourceLineNo">317</span>            case START_ARRAY:<a name="line.317"></a>
+<span class="sourceLineNo">318</span>                generator.writeStartArray();<a name="line.318"></a>
+<span class="sourceLineNo">319</span>                break;<a name="line.319"></a>
+<span class="sourceLineNo">320</span>            case END_ARRAY:<a name="line.320"></a>
+<span class="sourceLineNo">321</span>                generator.writeEndArray();<a name="line.321"></a>
+<span class="sourceLineNo">322</span>                break;<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            case FIELD_NAME:<a name="line.323"></a>
+<span class="sourceLineNo">324</span>                generator.writeFieldName(parser.currentName());<a name="line.324"></a>
+<span class="sourceLineNo">325</span>                break;<a name="line.325"></a>
+<span class="sourceLineNo">326</span>            case VALUE_STRING:<a name="line.326"></a>
+<span class="sourceLineNo">327</span>                if (parser.hasTextCharacters()) {<a name="line.327"></a>
+<span class="sourceLineNo">328</span>                    generator.writeString(parser.textCharacters(), parser.textOffset(), parser.textLength());<a name="line.328"></a>
+<span class="sourceLineNo">329</span>                } else {<a name="line.329"></a>
+<span class="sourceLineNo">330</span>                    generator.writeString(parser.text());<a name="line.330"></a>
+<span class="sourceLineNo">331</span>                }<a name="line.331"></a>
+<span class="sourceLineNo">332</span>                break;<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            case VALUE_NUMBER:<a name="line.333"></a>
+<span class="sourceLineNo">334</span>                switch (parser.numberType()) {<a name="line.334"></a>
+<span class="sourceLineNo">335</span>                    case INT:<a name="line.335"></a>
+<span class="sourceLineNo">336</span>                        generator.writeNumber(parser.intValue());<a name="line.336"></a>
+<span class="sourceLineNo">337</span>                        break;<a name="line.337"></a>
+<span class="sourceLineNo">338</span>                    case LONG:<a name="line.338"></a>
+<span class="sourceLineNo">339</span>                        generator.writeNumber(parser.longValue());<a name="line.339"></a>
+<span class="sourceLineNo">340</span>                        break;<a name="line.340"></a>
+<span class="sourceLineNo">341</span>                    case FLOAT:<a name="line.341"></a>
+<span class="sourceLineNo">342</span>                        generator.writeNumber(parser.floatValue());<a name="line.342"></a>
+<span class="sourceLineNo">343</span>                        break;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>                    case DOUBLE:<a name="line.344"></a>
+<span class="sourceLineNo">345</span>                        generator.writeNumber(parser.doubleValue());<a name="line.345"></a>
+<span class="sourceLineNo">346</span>                        break;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>                }<a name="line.347"></a>
+<span class="sourceLineNo">348</span>                break;<a name="line.348"></a>
+<span class="sourceLineNo">349</span>            case VALUE_BOOLEAN:<a name="line.349"></a>
+<span class="sourceLineNo">350</span>                generator.writeBoolean(parser.booleanValue());<a name="line.350"></a>
+<span class="sourceLineNo">351</span>                break;<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            case VALUE_NULL:<a name="line.352"></a>
+<span class="sourceLineNo">353</span>                generator.writeNull();<a name="line.353"></a>
+<span class="sourceLineNo">354</span>                break;<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            case VALUE_EMBEDDED_OBJECT:<a name="line.355"></a>
+<span class="sourceLineNo">356</span>                generator.writeBinary(parser.binaryValue());<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        }<a name="line.357"></a>
+<span class="sourceLineNo">358</span>    }<a name="line.358"></a>
+<span class="sourceLineNo">359</span><a name="line.359"></a>
+<span class="sourceLineNo">360</span>}<a name="line.360"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
