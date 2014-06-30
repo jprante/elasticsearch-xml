@@ -25,7 +25,7 @@ The JSON to XML conversion uses some tricks. Therefore you must not be surprised
 
 | File                                         | SHA1                                     |
 | ---------------------------------------------| -----------------------------------------|
-| elasticsearch-xml-1.2.1.0-plugin.zip         | 730bbc736df6acc7e33601d548e88834af78cfa9 |
+| elasticsearch-xml-1.2.1.0-plugin.zip         | 8a176ab66c16bdee322fe6ba75e805ddb271d6c3 |
 
 ## Installation
 
