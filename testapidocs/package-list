@@ -1,2 +1,2 @@
-
-org.apache.logging.log4j.nosql.appender
+org.xbib.elasticsearch.integration
+org.xbib.elasticsearch.xml

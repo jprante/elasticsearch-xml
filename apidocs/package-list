@@ -1,1 +1,4 @@
-org.xbib.logging.log4j2
+org.xbib.elasticsearch.common.xcontent
+org.xbib.elasticsearch.common.xcontent.xml
+org.xbib.elasticsearch.plugin.xml
+org.xbib.elasticsearch.rest.xml
