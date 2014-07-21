@@ -10,7 +10,7 @@
 
     <groupId>org.xbib.elasticsearch.plugin</groupId>
     <artifactId>elasticsearch-xml</artifactId>
-    <version>1.2.1.0</version>
+    <version>1.2.2.0</version>
     <packaging>jar</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -40,7 +40,7 @@
         <github.global.server>github</github.global.server>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.compile.version>1.7</java.compile.version>
-        <elasticsearch.version>1.2.1</elasticsearch.version>
+        <elasticsearch.version>1.2.2</elasticsearch.version>
         <jackson.version>2.4.1</jackson.version>
         <woodstox.version>4.2.0</woodstox.version>
     </properties>

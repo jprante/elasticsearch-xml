@@ -1,9 +1,10 @@
-
 package org.xbib.elasticsearch.common.xcontent.xml;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 import org.elasticsearch.common.bytes.BytesReference;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.xcontent.XContentGenerator;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.xbib.elasticsearch.common.xcontent.XmlXContentHelper;
@@ -11,7 +12,6 @@ import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentString;
 
 import javax.xml.namespace.QName;
-import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +22,8 @@ import java.io.OutputStream;
  *
  */
 public class XmlXContentGenerator implements XContentGenerator {
+
+    private final static ESLogger logger = ESLoggerFactory.getLogger(XmlXContentGenerator.class.getName());
 
     protected final ToXmlGenerator generator;
 
@@ -93,8 +95,8 @@ public class XmlXContentGenerator implements XContentGenerator {
                 }
                 started = true;
             }
-        } catch (XMLStreamException e) {
-            throw new IOException(e);
+        } catch (Exception e) {
+            logger.warn(e.getMessage(), e);
         }
     }
 
@@ -116,45 +118,45 @@ public class XmlXContentGenerator implements XContentGenerator {
 
     @Override
     public void writeString(String text) throws IOException {
-        generator.writeString(text);
-        if (context && prefix != null) {
-            try {
+        try {
+            generator.writeString(text);
+            if (context && prefix != null) {
                 params.getNamespaceContext().addNamespace(prefix, text);
                 generator.getStaxWriter().writeNamespace(prefix, text);
-            } catch (XMLStreamException e) {
-                throw new IOException(e);
+                prefix = null;
             }
-            prefix = null;
+        } catch (Exception e) {
+            logger.warn(e.getMessage() + ": " + text, e);
         }
     }
 
     @Override
     public void writeString(char[] text, int offset, int len) throws IOException {
-        generator.writeString(text, offset, len);
-        if (context && prefix != null) {
-            try {
-                String s = new String(text, offset, len);
+        String s = new String(text, offset, len);
+        try {
+            generator.writeString(s);
+            if (context && prefix != null) {
                 params.getNamespaceContext().addNamespace(prefix, s);
                 generator.getStaxWriter().writeNamespace(prefix, s);
-            } catch (XMLStreamException e) {
-                throw new IOException(e);
+                prefix = null;
             }
-            prefix = null;
+        } catch (Exception e) {
+            logger.warn(e.getMessage() + ": " + s, e);
         }
     }
 
     @Override
     public void writeUTF8String(byte[] text, int offset, int length) throws IOException {
-        generator.writeUTF8String(text, offset, length);
-        if (context && prefix != null) {
-            try {
-                String s = new String(text, offset, length);
+        String s = new String(text, offset, length);
+        try {
+            generator.writeUTF8String(text, offset, length);
+            if (context && prefix != null) {
                 params.getNamespaceContext().addNamespace(prefix, s);
                 generator.getStaxWriter().writeNamespace(prefix, s);
-            } catch (XMLStreamException e) {
-                throw new IOException(e);
+                prefix = null;
             }
-            prefix = null;
+        } catch (Exception e) {
+            logger.warn(e.getMessage() + ": " + s, e);
         }
     }
 
@@ -212,14 +214,14 @@ public class XmlXContentGenerator implements XContentGenerator {
 
     @Override
     public void writeStringField(String fieldName, String value) throws IOException {
-        generator.writeStringField(fieldName, value);
-        if (context && value != null) {
-            try {
+        try {
+            generator.writeStringField(fieldName, value);
+            if (context && value != null) {
                 params.getNamespaceContext().addNamespace(fieldName, value);
                 generator.getStaxWriter().writeNamespace(fieldName, value);
-            } catch (XMLStreamException e) {
-                throw new IOException(e);
             }
+        } catch (Exception e) {
+            logger.warn(e.getMessage() + ": " + fieldName + "=" + value, e);
         }
     }
 
@@ -317,24 +319,18 @@ public class XmlXContentGenerator implements XContentGenerator {
     @Override
     public void writeRawField(String fieldName, InputStream content, OutputStream bos) throws IOException {
         writeFieldNameXml(fieldName);
-        JsonParser parser = XmlXContent.xmlFactory().createParser(content);
-        try {
+        try (JsonParser parser = XmlXContent.xmlFactory().createParser(content)) {
             parser.nextToken();
             generator.copyCurrentStructure(parser);
-        } finally {
-            parser.close();
         }
     }
 
     @Override
     public void writeRawField(String fieldName, byte[] content, OutputStream bos) throws IOException {
         writeFieldNameXml(fieldName);
-        JsonParser parser = XmlXContent.xmlFactory().createParser(content);
-        try {
+        try (JsonParser parser = XmlXContent.xmlFactory().createParser(content)) {
             parser.nextToken();
             generator.copyCurrentStructure(parser);
-        } finally {
-            parser.close();
         }
     }
 
@@ -358,12 +354,9 @@ public class XmlXContentGenerator implements XContentGenerator {
     @Override
     public void writeRawField(String fieldName, byte[] content, int offset, int length, OutputStream bos) throws IOException {
         writeFieldNameXml(fieldName);
-        JsonParser parser = XmlXContent.xmlFactory().createParser(content, offset, length);
-        try {
+        try (JsonParser parser = XmlXContent.xmlFactory().createParser(content, offset, length)) {
             parser.nextToken();
             generator.copyCurrentStructure(parser);
-        } finally {
-            parser.close();
         }
     }
 
