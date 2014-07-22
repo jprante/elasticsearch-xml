@@ -1,4 +1,3 @@
-
 package org.xbib.elasticsearch.rest.xml;
 
 import org.elasticsearch.common.bytes.BytesReference;
@@ -146,13 +145,10 @@ public class XmlFilter extends RestFilter {
      */
     class XmlChannel extends HttpChannel {
 
-        //private final RestRequest request;
-
         private final RestChannel channel;
 
         XmlChannel(RestRequest request, RestChannel channel) {
             super(request);
-            //this.request = request;
             this.channel = channel;
         }
 
@@ -164,16 +160,16 @@ public class XmlFilter extends RestFilter {
             if (isXml(request)) {
                 XContentParser parser = null;
                 try {
-                    byte[] b = response.content().array();
-                    XContentType xContentType = XContentFactory.xContentType(b);
-                    parser = XContentFactory.xContent(xContentType).createParser(b);
+                    String string = response.content().toUtf8(); // takes some space ... :(
+                    XContentType xContentType = XContentFactory.xContentType(string);
+                    parser = XContentFactory.xContent(xContentType).createParser(string);
                     parser.nextToken();
                     XmlXContentBuilder builder = XmlXContentFactory.xmlBuilder(params);
                     if (request.paramAsBoolean("pretty", false)) {
                         builder.prettyPrint();
                     }
                     builder.copyCurrentStructure(parser);
-                    channel.sendResponse(new XmlRestResponse(RestStatus.OK, builder.string()));
+                    channel.sendResponse(new BytesRestResponse(RestStatus.OK, "text/xml; charset=UTF-8", builder.bytes(), false));
                     return;
                 } catch (Throwable e) {
                     logger.error(e.getMessage(), e);
@@ -189,15 +185,4 @@ public class XmlFilter extends RestFilter {
         }
     }
 
-    static class XmlRestResponse extends BytesRestResponse {
-
-        public XmlRestResponse(RestStatus status, String content) {
-            super(status, content);
-        }
-
-        public String contentType() {
-            return "text/xml; charset=UTF-8";
-        }
-
-    }
 }
