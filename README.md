@@ -18,12 +18,14 @@ The JSON to XML conversion uses some tricks. Therefore you must not be surprised
 
 | Elasticsearch version    | Plugin     | Release date |
 | ------------------------ | -----------| -------------|
+| 1.3.2                    | 1.3.0.0    | Aug 19, 2014 |
 | 1.2.2                    | 1.2.2.1    | Jul 22, 2014 |
 
 ## Checksum
 
 | File                                         | SHA1                                     |
 | ---------------------------------------------| -----------------------------------------|
+| elasticsearch-xml-1.3.0.0-plugin.zip         | 7904bc54a656088fe35bcedf4f3a04910b37a172 |
 | elasticsearch-xml-1.2.2.1-plugin.zip         | 087fc9309752ec3238013158c24aae7b0ca0512b |
 | elasticsearch-xml-1.2.2.0-plugin.zip         | b2a4917a6965a92e45c54cdd84a9c52c96046ddb |
 
@@ -189,7 +191,7 @@ If nested XML do not lead to a proper JSON object, an empty JSON name is used, w
 
 Example
 
-    curl -XPOST -H 'Content-type: application/xml' '0:9200/a/c/1' -d '<root><name attr="test">value</name></root>'
+    curl -XPOST -H 'Accept: application/xml' '0:9200/a/c/1' -d '<root><name attr="test">value</name></root>'
 
 Result
 
