@@ -10,7 +10,7 @@
 
     <groupId>org.xbib.elasticsearch.plugin</groupId>
     <artifactId>elasticsearch-xml</artifactId>
-    <version>1.3.0.0</version>
+    <version>1.4.2.0</version>
     <packaging>jar</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -40,9 +40,9 @@
         <github.global.server>github</github.global.server>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.compiler.version>1.7</java.compiler.version>
-        <elasticsearch.version>1.3.2</elasticsearch.version>
-        <jackson.version>2.4.1</jackson.version>
-        <woodstox.version>4.2.0</woodstox.version>
+        <elasticsearch.version>1.4.2</elasticsearch.version>
+        <jackson.version>2.4.2</jackson.version>
+        <woodstox.version>4.4.1</woodstox.version>
     </properties>
 
     <dependencies>
@@ -254,4 +254,29 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <profiles>
+        <profile>
+            <id>doclint-java8-disable</id>
+            <activation>
+                <os>
+                    <name>mac os x</name>
+                </os>
+                <jdk>[1.8,</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration>
+                            <javadocExecutable>/Library/Java/JavaVirtualMachines/jdk1.8.0.jdk/Contents/Home/bin/javadoc</javadocExecutable>
+                            <additionalparam>-Xdoclint:none</additionalparam>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 </project>

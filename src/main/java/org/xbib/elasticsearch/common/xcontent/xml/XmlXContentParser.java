@@ -4,12 +4,12 @@ package org.xbib.elasticsearch.common.xcontent.xml;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.UnicodeUtil;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.support.AbstractXContentParser;
 
 import java.io.IOException;
+import java.nio.CharBuffer;
 
 /**
  *
@@ -78,10 +78,8 @@ public class XmlXContentParser extends AbstractXContentParser {
     }
 
     @Override
-    public BytesRef bytes() throws IOException {
-        BytesRef bytes = new BytesRef();
-        UnicodeUtil.UTF16toUTF8(parser.getTextCharacters(), parser.getTextOffset(), parser.getTextLength(), bytes);
-        return bytes;
+    public BytesRef utf8Bytes() throws IOException {
+        return new BytesRef(CharBuffer.wrap(parser.getTextCharacters(), parser.getTextOffset(), parser.getTextLength()));
     }
 
     @Override
