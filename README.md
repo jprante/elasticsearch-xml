@@ -18,22 +18,14 @@ The JSON to XML conversion uses some tricks. Therefore you must not be surprised
 
 | Elasticsearch version    | Plugin     | Release date |
 | ------------------------ | -----------| -------------|
+| 1.6.0                    | 1.6.0.0    | Jun 15, 2015 |
 | 1.4.2                    | 1.4.2.0    | Feb  2, 2015 |
 | 1.3.2                    | 1.3.0.0    | Aug 19, 2014 |
 | 1.2.2                    | 1.2.2.1    | Jul 22, 2014 |
 
-## Checksum
-
-| File                                         | SHA1                                     |
-| ---------------------------------------------| -----------------------------------------|
-| elasticsearch-xml-1.4.2.0-plugin.zip         | 6b0596053fb8c77aba7d463cf5a295986329fd3f |
-| elasticsearch-xml-1.3.0.0-plugin.zip         | 7904bc54a656088fe35bcedf4f3a04910b37a172 |
-| elasticsearch-xml-1.2.2.1-plugin.zip         | 087fc9309752ec3238013158c24aae7b0ca0512b |
-| elasticsearch-xml-1.2.2.0-plugin.zip         | b2a4917a6965a92e45c54cdd84a9c52c96046ddb |
-
 ## Installation
 
-    ./bin/plugin --install xml --url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-xml/1.4.2.0/elasticsearch-xml-1.4.2.0-plugin.zip
+    ./bin/plugin --install xml --url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-xml/1.6.0.0/elasticsearch-xml-1.6.0.0-plugin.zip
 
 Do not forget to restart the node after installing.
 
