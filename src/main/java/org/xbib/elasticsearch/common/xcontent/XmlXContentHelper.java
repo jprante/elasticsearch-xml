@@ -44,7 +44,7 @@ public class XmlXContentHelper {
     public static XContentParser createParser(byte[] data, int offset, int length) throws IOException {
         Compressor compressor = CompressorFactory.compressor(data, offset, length);
         if (compressor != null) {
-            CompressedStreamInput compressedInput = compressor.streamInput(new BytesStreamInput(data, offset, length, false));
+            CompressedStreamInput compressedInput = compressor.streamInput(new BytesStreamInput(data, offset, length));
             XmlXContentType contentType = XmlXContentFactory.xContentType(compressedInput);
             compressedInput.resetToBufferStart();
             return XmlXContentFactory.xContent(contentType).createParser(compressedInput);
@@ -93,7 +93,7 @@ public class XmlXContentHelper {
             XmlXContentType contentType;
             Compressor compressor = CompressorFactory.compressor(data, offset, length);
             if (compressor != null) {
-                CompressedStreamInput compressedStreamInput = compressor.streamInput(new BytesStreamInput(data, offset, length, false));
+                CompressedStreamInput compressedStreamInput = compressor.streamInput(new BytesStreamInput(data, offset, length));
                 contentType = XmlXContentFactory.xContentType(compressedStreamInput);
                 compressedStreamInput.resetToBufferStart();
                 parser = XmlXContentFactory.xContent(contentType).createParser(compressedStreamInput);

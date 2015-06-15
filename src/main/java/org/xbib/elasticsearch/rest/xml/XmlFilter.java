@@ -82,11 +82,6 @@ public class XmlFilter extends RestFilter {
         }
 
         @Override
-        public boolean contentUnsafe() {
-            return request.contentUnsafe();
-        }
-
-        @Override
         public BytesReference content() {
             if (isXml(request)) {
                 XContentParser parser = null;
@@ -148,7 +143,7 @@ public class XmlFilter extends RestFilter {
         private final RestChannel channel;
 
         XmlChannel(RestRequest request, RestChannel channel) {
-            super(request);
+            super(request, true);
             this.channel = channel;
         }
 
@@ -169,7 +164,8 @@ public class XmlFilter extends RestFilter {
                         builder.prettyPrint();
                     }
                     builder.copyCurrentStructure(parser);
-                    channel.sendResponse(new BytesRestResponse(RestStatus.OK, "text/xml; charset=UTF-8", builder.bytes(), false));
+                    BytesRestResponse restResponse = new BytesRestResponse(RestStatus.OK, "text/xml; charset=UTF-8", builder.bytes());
+                    channel.sendResponse(restResponse);
                     return;
                 } catch (Throwable e) {
                     logger.error(e.getMessage(), e);

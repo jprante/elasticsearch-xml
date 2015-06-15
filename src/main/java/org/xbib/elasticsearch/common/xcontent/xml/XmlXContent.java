@@ -85,6 +85,12 @@ public class XmlXContent implements XContent {
     }
 
     @Override
+    public XContentGenerator createGenerator(OutputStream os, String[] filters) throws IOException {
+        // ignore filters (for now)
+        return new XmlXContentGenerator(xmlFactory.createGenerator(os, JsonEncoding.UTF8));
+    }
+
+    @Override
     public XContentGenerator createGenerator(Writer writer) throws IOException {
         return new XmlXContentGenerator(xmlFactory.createGenerator(writer));
     }

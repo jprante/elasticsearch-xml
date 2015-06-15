@@ -10,7 +10,7 @@
 
     <groupId>org.xbib.elasticsearch.plugin</groupId>
     <artifactId>elasticsearch-xml</artifactId>
-    <version>1.4.2.0</version>
+    <version>1.6.0.0</version>
     <packaging>jar</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -40,9 +40,9 @@
         <github.global.server>github</github.global.server>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.compiler.version>1.7</java.compiler.version>
-        <elasticsearch.version>1.4.2</elasticsearch.version>
-        <jackson.version>2.4.2</jackson.version>
-        <woodstox.version>4.4.1</woodstox.version>
+        <elasticsearch.version>1.6.0</elasticsearch.version>
+        <jackson.version>2.5.3</jackson.version>
+        <woodstox.version>5.0.1</woodstox.version>
     </properties>
 
     <dependencies>
@@ -64,8 +64,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.codehaus.woodstox</groupId>
-            <artifactId>woodstox-core-asl</artifactId>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
             <version>${woodstox.version}</version>
             <type>jar</type>
             <scope>compile</scope>
@@ -74,7 +74,7 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.8.8</version>
+            <version>6.8.21</version>
             <scope>test</scope>
         </dependency>
 
