@@ -10,7 +10,7 @@
 
     <groupId>org.xbib.elasticsearch.plugin</groupId>
     <artifactId>elasticsearch-xml</artifactId>
-    <version>1.6.0.1</version>
+    <version>1.6.0.2</version>
     <packaging>jar</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -67,6 +67,14 @@
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
             <version>${woodstox.version}</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.woodstox</groupId>
+            <artifactId>stax2-api</artifactId>
+            <version>3.1.4</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
