@@ -1,61 +1,33 @@
 package org.xbib.elasticsearch.xml;
 
+import org.elasticsearch.action.admin.cluster.node.info.NodesInfoAction;
+import org.elasticsearch.action.admin.cluster.node.info.NodesInfoRequestBuilder;
+import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
-import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.settings.ImmutableSettings;
-import org.elasticsearch.common.settings.Settings;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.xbib.elasticsearch.integration.AbstractNodesTests;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Random;
 
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.Assert.assertTrue;
 
-public class XmlPluginTest extends AbstractNodesTests {
-
-    private Client client;
-
-    @BeforeClass
-    public void createNodes() throws Exception {
-        Settings settings = ImmutableSettings.settingsBuilder()
-                .put("index.number_of_shards", numberOfShards())
-                .put("index.number_of_replicas", 0)
-                .build();
-        for (int i = 0; i < numberOfNodes(); i++) {
-            startNode("node" + i, settings);
-        }
-        client = getClient();
-    }
-
-    protected int numberOfShards() {
-        return 1;
-    }
-
-    protected int numberOfNodes() {
-        return 1;
-    }
-
-    @AfterClass
-    public void closeNodes() {
-        client.close();
-        closeAllNodes();
-    }
-
-    protected Client getClient() {
-        return client("node0");
-    }
+public class XmlPluginTest extends NodeTestUtils {
 
     @Test
     public void testHealthResponse() throws Exception {
-        URL url = new URL(getHttpAddressOfNode("node0").toURL(), "/_cluster/health?xml");
+        InetSocketTransportAddress httpAddress = findHttpAddress(client("1"));
+        if (httpAddress == null) {
+            throw new IllegalArgumentException("no HTTP address found");
+        }
+        URL base = new URL("http://" + httpAddress.getHost() + ":" + httpAddress.getPort());
+        URL url = new URL(base, "/_cluster/health?xml");
+
         BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
         String line;
         if ((line = reader.readLine()) != null) {
@@ -67,13 +39,18 @@ public class XmlPluginTest extends AbstractNodesTests {
 
     @Test
     public void testBigAndFatResponse() throws Exception {
-        Client client = getClient();
+        Client client = client("1");
         for (int i = 0; i < 10000; i++) {
             client.index(new IndexRequest("test", "test", Integer.toString(i))
                     .source("{\"random\":\""+randomString(32)+ " " + randomString(32) + "\"}")).actionGet();
         }
         client.admin().indices().refresh(new RefreshRequest("test")).actionGet();
-        URL url = new URL(getHttpAddressOfNode("node0").toURL(), "/test/test/_search?xml&pretty&size=10000");
+        InetSocketTransportAddress httpAddress = findHttpAddress(client);
+        if (httpAddress == null) {
+            throw new IllegalArgumentException("no HTTP address found");
+        }
+        URL base = new URL("http://" + httpAddress.getHost() + ":" + httpAddress.getPort());
+        URL url = new URL(base, "/test/test/_search?xml&pretty&size=10000");
         BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
         int count = 0;
         String line;
@@ -96,5 +73,16 @@ public class XmlPluginTest extends AbstractNodesTests {
             buf[i] = numbersAndLetters[random.nextInt(n)];
         }
         return new String(buf);
+    }
+
+    public static InetSocketTransportAddress findHttpAddress(Client client) {
+        NodesInfoRequestBuilder nodesInfoRequestBuilder = new NodesInfoRequestBuilder(client, NodesInfoAction.INSTANCE);
+        nodesInfoRequestBuilder.setHttp(true).setTransport(false);
+        NodesInfoResponse response = nodesInfoRequestBuilder.execute().actionGet();
+        Object obj = response.iterator().next().getHttp().getAddress().publishAddress();
+        if (obj instanceof InetSocketTransportAddress) {
+            return (InetSocketTransportAddress) obj;
+        }
+        return null;
     }
 }

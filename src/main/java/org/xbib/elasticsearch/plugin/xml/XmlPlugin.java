@@ -1,24 +1,20 @@
-
 package org.xbib.elasticsearch.plugin.xml;
 
 import org.elasticsearch.common.component.LifecycleComponent;
-import org.elasticsearch.plugins.AbstractPlugin;
+import org.elasticsearch.plugins.Plugin;
 import org.xbib.elasticsearch.rest.xml.XmlService;
 
+import java.util.ArrayList;
 import java.util.Collection;
-
-import static org.elasticsearch.common.collect.Lists.newArrayList;
 
 /**
  * XML plugin
  */
-public class XmlPlugin extends AbstractPlugin {
+public class XmlPlugin extends Plugin {
 
     @Override
     public String name() {
-        return "xml" + "-"
-                + Build.getInstance().getVersion() + "-"
-                + Build.getInstance().getShortHash();
+        return "xml";
     }
 
     @Override
@@ -27,8 +23,8 @@ public class XmlPlugin extends AbstractPlugin {
     }
 
     @Override
-    public Collection<Class<? extends LifecycleComponent>> services() {
-        Collection<Class<? extends LifecycleComponent>> services = newArrayList();
+    public Collection<Class<? extends LifecycleComponent>> nodeServices() {
+        Collection<Class<? extends LifecycleComponent>> services = new ArrayList<>();
         services.add(XmlService.class);
         return services;
     }

@@ -1,0 +1,169 @@
+
+println "Host: " + java.net.InetAddress.getLocalHost()
+println "Gradle: " + gradle.gradleVersion + " JVM: " + org.gradle.internal.jvm.Jvm.current() + " Groovy: " + GroovySystem.getVersion()
+println "Build: group: '${project.group}', name: '${project.name}', version: '${project.version}'"
+
+ext {
+    pluginName = 'xml'
+    pluginClassname = 'org.xbib.elasticsearch.plugin.xml.XmlPlugin'
+    pluginDescription = 'XML plugin for Elasticsearch'
+    user = 'jprante'
+    name = 'elasticsearch-xml'
+    scmUrl = 'https://github.com/' + user + '/' + name
+    scmConnection = 'scm:git:git://github.com/' + user + '/' + name + '.git'
+    scmDeveloperConnection = 'scm:git:git://github.com/' + user + '/' + name + '.git'
+    versions = [
+            'elasticsearch' : '2.3.5',
+            'jackson': '2.6.6',
+            'woodstox' : '5.0.2',
+            'log4j': '2.5',
+            'junit' : '4.12'
+    ]
+}
+
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven {
+            url "http://xbib.org/repository"
+        }
+    }
+    dependencies {
+        classpath 'org.ajoberstar:gradle-git:1.4.2'
+        classpath 'co.riiid:gradle-github-plugin:0.4.2'
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven {
+        url "http://xbib.org/repository"
+    }
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+configurations {
+    wagon
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+    releaseJars {
+        extendsFrom runtime
+        exclude group: 'org.elasticsearch'
+        exclude module: 'jna'
+        exclude module: 'jackson-core'
+        exclude module: 'jackson-dataformat-smile'
+        exclude module: 'jackson-dataformat-yaml'
+    }
+}
+
+dependencies {
+    compile "org.elasticsearch:elasticsearch:${versions.elasticsearch}"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${versions.jackson}"
+    testCompile "junit:junit:${versions.junit}"
+    testCompile "org.apache.logging.log4j:log4j-slf4j-impl:${versions.log4j}"
+    testCompile "org.apache.logging.log4j:log4j-core:${versions.log4j}"
+    testCompile "com.fasterxml.woodstox:woodstox-core:${versions.woodstox}"
+    releaseJars "${project.group}:${project.name}:${project.version}"
+    wagon 'org.apache.maven.wagon:wagon-ssh-external:2.10'
+}
+
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked,deprecation"
+}
+
+task makePluginDescriptor(type: Copy) {
+    from 'src/main/templates'
+    into 'build/tmp/plugin'
+    expand([
+        'descriptor': [
+            'name': pluginName,
+            'classname': pluginClassname,
+            'description': pluginDescription,
+            'jvm': true,
+            'site': false,
+            'isolated': true,
+            'version': project.property('version'),
+            'javaVersion': project.property('targetCompatibility'),
+            'elasticsearchVersion' : versions.elasticsearch
+        ]
+    ])
+}
+
+task buildPluginZip(type: Zip, dependsOn: [':jar', ':makePluginDescriptor']) {
+    from configurations.releaseJars
+    from 'build/tmp/plugin'
+    classifier = 'plugin'
+}
+
+task unpackPlugin(type: Copy, dependsOn: [':buildPluginZip']) {
+    delete "plugins"
+    from configurations.releaseJars
+    from 'build/tmp/plugin'
+    into "plugins/${pluginName}"
+}
+
+task integrationTest(type: Test, dependsOn: ['unpackPlugin']) {
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = configurations.integrationTestCompile
+    classpath += fileTree("plugins/${pluginName}").include('*.jar')
+    classpath += sourceSets.integrationTest.output
+    // without this trick to remove identical jars from classpath, an Elasticsearch bug whines about a "jar hell"
+    classpath -= configurations.releaseJars
+    outputs.upToDateWhen { false }
+    systemProperty 'path.home', projectDir.absolutePath
+    testLogging.showStandardStreams = false
+}
+
+integrationTest.mustRunAfter test
+check.dependsOn integrationTest
+
+clean {
+    delete "plugins"
+    delete "logs"
+}
+
+task javadocJar(type: Jar, dependsOn: classes) {
+    from javadoc
+    into "build/tmp"
+    classifier 'javadoc'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    from sourceSets.main.allSource
+    into "build/tmp"
+    classifier 'sources'
+}
+
+artifacts {
+    archives javadocJar, sourcesJar, buildPluginZip
+}
+
+if (project.hasProperty('signing.keyId')) {
+    signing {
+        sign configurations.archives
+    }
+}
+
+apply from: 'gradle/publish.gradle'

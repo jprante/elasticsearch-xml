@@ -1,18 +1,13 @@
-
 package org.xbib.elasticsearch.common.xcontent;
 
+import com.google.common.base.Charsets;
 import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.base.Charsets;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.io.BytesStream;
 import org.elasticsearch.common.io.stream.BytesStreamOutput;
-import org.elasticsearch.common.joda.time.DateTimeZone;
-import org.elasticsearch.common.joda.time.ReadableInstant;
-import org.elasticsearch.common.joda.time.format.DateTimeFormatter;
-import org.elasticsearch.common.joda.time.format.ISODateTimeFormat;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
@@ -21,6 +16,10 @@ import org.elasticsearch.common.xcontent.XContentBuilderString;
 import org.elasticsearch.common.xcontent.XContentGenerator;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.joda.time.DateTimeZone;
+import org.joda.time.ReadableInstant;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,9 +30,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
-/**
- *
- */
 public final class XmlXContentBuilder implements BytesStream {
 
     public static enum FieldCaseConversion {
@@ -811,26 +807,6 @@ public final class XmlXContentBuilder implements BytesStream {
         return this;
     }
 
-    public XmlXContentBuilder rawField(String fieldName, byte[] content) throws IOException {
-        generator.writeRawField(fieldName, content, bos);
-        return this;
-    }
-
-    public XmlXContentBuilder rawField(String fieldName, byte[] content, int offset, int length) throws IOException {
-        generator.writeRawField(fieldName, content, offset, length, bos);
-        return this;
-    }
-
-    public XmlXContentBuilder rawField(String fieldName, InputStream content) throws IOException {
-        generator.writeRawField(fieldName, content, bos);
-        return this;
-    }
-
-    public XmlXContentBuilder rawField(String fieldName, BytesReference content) throws IOException {
-        generator.writeRawField(fieldName, content, bos);
-        return this;
-    }
-
     public XmlXContentBuilder timeValueField(XContentBuilderString rawFieldName, XContentBuilderString readableFieldName, TimeValue timeValue) throws IOException {
         if (humanReadable) {
             field(readableFieldName, timeValue.toString());
@@ -1067,14 +1043,12 @@ public final class XmlXContentBuilder implements BytesStream {
 
     /**
      * Returns a string representation of the builder (only applicable for text based xcontent).
-     * <p/>
      */
     public String string() throws IOException {
         close();
         BytesArray bytesArray = bytes().toBytesArray();
         return new String(bytesArray.array(), bytesArray.arrayOffset(), bytesArray.length(), Charsets.UTF_8);
     }
-
 
     private void writeMap(Map<String, Object> map) throws IOException {
         generator.writeStartObject();
@@ -1091,6 +1065,7 @@ public final class XmlXContentBuilder implements BytesStream {
         generator.writeEndObject();
     }
 
+    @SuppressWarnings("unchecked")
     private void writeValue(Object value) throws IOException {
         if (value == null) {
             generator.writeNull();

@@ -1,5 +1,3 @@
-
-
 package org.xbib.elasticsearch.common.xcontent;
 
 import org.elasticsearch.common.xcontent.XContent;

@@ -1,4 +1,3 @@
-
 package org.xbib.elasticsearch.common.xcontent.xml;
 
 import com.fasterxml.jackson.core.JsonEncoding;
@@ -17,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.Writer;
 
 /**
  * A XML based content implementation using Jackson XML dataformat
@@ -88,11 +86,6 @@ public class XmlXContent implements XContent {
     public XContentGenerator createGenerator(OutputStream os, String[] filters) throws IOException {
         // ignore filters (for now)
         return new XmlXContentGenerator(xmlFactory.createGenerator(os, JsonEncoding.UTF8));
-    }
-
-    @Override
-    public XContentGenerator createGenerator(Writer writer) throws IOException {
-        return new XmlXContentGenerator(xmlFactory.createGenerator(writer));
     }
 
     @Override

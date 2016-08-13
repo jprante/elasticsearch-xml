@@ -1,11 +1,9 @@
-
 package org.xbib.elasticsearch.common.xcontent;
 
-import org.elasticsearch.ElasticsearchIllegalArgumentException;
+import com.fasterxml.jackson.dataformat.smile.SmileConstants;
 import org.elasticsearch.ElasticsearchParseException;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.jackson.dataformat.smile.SmileConstants;
 import org.elasticsearch.common.xcontent.XContent;
 import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.common.xcontent.smile.SmileXContent;
@@ -96,7 +94,7 @@ public class XmlXContentFactory {
         } else if (type == XmlXContentType.XML) {
             return xmlBuilder(outputStream);
         }
-        throw new ElasticsearchIllegalArgumentException("No matching content type for " + type);
+        throw new IllegalArgumentException("No matching content type for " + type);
     }
 
     /**
@@ -107,7 +105,7 @@ public class XmlXContentFactory {
             XmlXParams params = new XmlXParams();
             return XmlXContent.contentBuilder(params);
         }
-        throw new ElasticsearchIllegalArgumentException("No matching content type for " + type);
+        throw new IllegalArgumentException("No matching content type for " + type);
     }
 
     /**

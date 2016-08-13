@@ -1,9 +1,9 @@
-
 package org.xbib.elasticsearch.common.xcontent.xml;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import org.apache.lucene.util.BytesRef;
+import org.elasticsearch.common.xcontent.XContentLocation;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.common.xcontent.support.AbstractXContentParser;
@@ -11,9 +11,6 @@ import org.elasticsearch.common.xcontent.support.AbstractXContentParser;
 import java.io.IOException;
 import java.nio.CharBuffer;
 
-/**
- *
- */
 public class XmlXContentParser extends AbstractXContentParser {
 
     final JsonParser parser;
@@ -22,55 +19,41 @@ public class XmlXContentParser extends AbstractXContentParser {
         this.parser = parser;
     }
 
-
     @Override
     public XContentType contentType() {
         //return XmlXContentType.XML;
         return null;
     }
 
-
     @Override
     public XContentParser.Token nextToken() throws IOException {
         return convertToken(parser.nextToken());
     }
-
 
     @Override
     public void skipChildren() throws IOException {
         parser.skipChildren();
     }
 
-
     @Override
     public XContentParser.Token currentToken() {
         return convertToken(parser.getCurrentToken());
     }
-
 
     @Override
     public XContentParser.NumberType numberType() throws IOException {
         return convertNumberType(parser.getNumberType());
     }
 
-
-    @Override
-    public boolean estimatedNumberType() {
-        return true;
-    }
-
-
     @Override
     public String currentName() throws IOException {
         return parser.getCurrentName();
     }
 
-
     @Override
     protected boolean doBooleanValue() throws IOException {
         return parser.getBooleanValue();
     }
-
 
     @Override
     public String text() throws IOException {
@@ -104,7 +87,7 @@ public class XmlXContentParser extends AbstractXContentParser {
     public Object objectBytes() throws IOException {
         JsonToken currentToken = parser.getCurrentToken();
         if (currentToken == JsonToken.VALUE_STRING) {
-            return bytes();
+            return utf8Bytes();
         } else if (currentToken == JsonToken.VALUE_NUMBER_INT || currentToken == JsonToken.VALUE_NUMBER_FLOAT) {
             return parser.getNumberValue();
         } else if (currentToken == JsonToken.VALUE_TRUE) {
@@ -114,7 +97,7 @@ public class XmlXContentParser extends AbstractXContentParser {
         } else if (currentToken == JsonToken.VALUE_NULL) {
             return null;
         } else {
-            return bytes();
+            return utf8Bytes();
         }
     }
 
@@ -123,66 +106,65 @@ public class XmlXContentParser extends AbstractXContentParser {
         return parser.hasTextCharacters();
     }
 
-
     @Override
     public char[] textCharacters() throws IOException {
         return parser.getTextCharacters();
     }
-
 
     @Override
     public int textLength() throws IOException {
         return parser.getTextLength();
     }
 
-
     @Override
     public int textOffset() throws IOException {
         return parser.getTextOffset();
     }
-
 
     @Override
     public Number numberValue() throws IOException {
         return parser.getNumberValue();
     }
 
-
     @Override
     public short doShortValue() throws IOException {
         return parser.getShortValue();
     }
-
 
     @Override
     public int doIntValue() throws IOException {
         return parser.getIntValue();
     }
 
-
     @Override
     public long doLongValue() throws IOException {
         return parser.getLongValue();
     }
-
 
     @Override
     public float doFloatValue() throws IOException {
         return parser.getFloatValue();
     }
 
-
     @Override
     public double doDoubleValue() throws IOException {
         return parser.getDoubleValue();
     }
 
+    @Override
+    public boolean isClosed() {
+        return parser.isClosed();
+    }
 
     @Override
     public byte[] binaryValue() throws IOException {
         return parser.getBinaryValue();
     }
 
+    @Override
+    public XContentLocation getTokenLocation() {
+        return null;
+    }
 
     @Override
     public void close() {

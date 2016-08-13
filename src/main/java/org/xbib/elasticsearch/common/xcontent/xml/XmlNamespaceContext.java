@@ -1,7 +1,4 @@
-
 package org.xbib.elasticsearch.common.xcontent.xml;
-
-import org.elasticsearch.common.collect.Maps;
 
 import javax.xml.namespace.NamespaceContext;
 import java.util.Enumeration;
@@ -12,6 +9,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Contains a simple context for XML namespaces
@@ -21,9 +19,9 @@ public class XmlNamespaceContext implements NamespaceContext {
 
     private static final String DEFAULT_RESOURCE = "xml-namespaces";
 
-    private final SortedMap<String, String> namespaces = Maps.newTreeMap();
+    private final SortedMap<String, String> namespaces = new TreeMap<>();
 
-    private final SortedMap<String, Set<String>> prefixes = Maps.newTreeMap();
+    private final SortedMap<String, Set<String>> prefixes = new TreeMap<>();
 
     protected XmlNamespaceContext() {
     }

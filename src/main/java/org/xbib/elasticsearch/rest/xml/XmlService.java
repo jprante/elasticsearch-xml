@@ -1,4 +1,3 @@
-
 package org.xbib.elasticsearch.rest.xml;
 
 import org.elasticsearch.ElasticsearchException;

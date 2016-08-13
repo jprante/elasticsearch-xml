@@ -7,14 +7,12 @@ import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.ESLoggerFactory;
 import org.elasticsearch.common.xcontent.XContentGenerator;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.xbib.elasticsearch.common.xcontent.XmlXContentHelper;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentString;
 
 import javax.xml.namespace.QName;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  *
@@ -317,7 +315,7 @@ public class XmlXContentGenerator implements XContentGenerator {
     }
 
     @Override
-    public void writeRawField(String fieldName, InputStream content, OutputStream bos) throws IOException {
+    public void writeRawField(String fieldName, InputStream content) throws IOException {
         writeFieldNameXml(fieldName);
         try (JsonParser parser = XmlXContent.xmlFactory().createParser(content)) {
             parser.nextToken();
@@ -326,38 +324,17 @@ public class XmlXContentGenerator implements XContentGenerator {
     }
 
     @Override
-    public void writeRawField(String fieldName, byte[] content, OutputStream bos) throws IOException {
+    public void writeRawField(String fieldName, BytesReference content) throws IOException {
         writeFieldNameXml(fieldName);
-        try (JsonParser parser = XmlXContent.xmlFactory().createParser(content)) {
+        try (JsonParser parser = XmlXContent.xmlFactory().createParser(content.toBytes())) {
             parser.nextToken();
             generator.copyCurrentStructure(parser);
         }
     }
 
     @Override
-    public void writeRawField(String fieldName, BytesReference content, OutputStream bos) throws IOException {
-        writeFieldNameXml(fieldName);
-        JsonParser parser;
-        if (content.hasArray()) {
-            parser = XmlXContent.xmlFactory().createParser(content.array(), content.arrayOffset(), content.length());
-        } else {
-            parser = XmlXContent.xmlFactory().createParser(content.streamInput());
-        }
-        try {
-            parser.nextToken();
-            generator.copyCurrentStructure(parser);
-        } finally {
-            parser.close();
-        }
-    }
-
-    @Override
-    public void writeRawField(String fieldName, byte[] content, int offset, int length, OutputStream bos) throws IOException {
-        writeFieldNameXml(fieldName);
-        try (JsonParser parser = XmlXContent.xmlFactory().createParser(content, offset, length)) {
-            parser.nextToken();
-            generator.copyCurrentStructure(parser);
-        }
+    public void writeRawValue(BytesReference content) throws IOException {
+        generator.writeRawValue(content.toUtf8());
     }
 
     @Override
@@ -368,9 +345,91 @@ public class XmlXContentGenerator implements XContentGenerator {
         if (parser instanceof XmlXContentParser) {
             generator.copyCurrentStructure(((XmlXContentParser) parser).parser);
         } else {
-            XmlXContentHelper.copyCurrentStructure(this, parser);
+            copyCurrentStructure(this, parser);
         }
     }
+
+    public static void copyCurrentStructure(XContentGenerator generator, XContentParser parser) throws IOException {
+        XContentParser.Token t = parser.currentToken();
+
+        // Let's handle field-name separately first
+        if (t == XContentParser.Token.FIELD_NAME) {
+            generator.writeFieldName(parser.currentName());
+            t = parser.nextToken();
+            // fall-through to copy the associated value
+        }
+
+        switch (t) {
+            case START_ARRAY:
+                generator.writeStartArray();
+                while (parser.nextToken() != XContentParser.Token.END_ARRAY) {
+                    copyCurrentStructure(generator, parser);
+                }
+                generator.writeEndArray();
+                break;
+            case START_OBJECT:
+                generator.writeStartObject();
+                while (parser.nextToken() != XContentParser.Token.END_OBJECT) {
+                    copyCurrentStructure(generator, parser);
+                }
+                generator.writeEndObject();
+                break;
+            default: // others are simple:
+                copyCurrentEvent(generator, parser);
+        }
+    }
+
+    public static void copyCurrentEvent(XContentGenerator generator, XContentParser parser) throws IOException {
+        switch (parser.currentToken()) {
+            case START_OBJECT:
+                generator.writeStartObject();
+                break;
+            case END_OBJECT:
+                generator.writeEndObject();
+                break;
+            case START_ARRAY:
+                generator.writeStartArray();
+                break;
+            case END_ARRAY:
+                generator.writeEndArray();
+                break;
+            case FIELD_NAME:
+                generator.writeFieldName(parser.currentName());
+                break;
+            case VALUE_STRING:
+                if (parser.hasTextCharacters()) {
+                    generator.writeString(parser.textCharacters(), parser.textOffset(), parser.textLength());
+                } else {
+                    generator.writeString(parser.text());
+                }
+                break;
+            case VALUE_NUMBER:
+                switch (parser.numberType()) {
+                    case INT:
+                        generator.writeNumber(parser.intValue());
+                        break;
+                    case LONG:
+                        generator.writeNumber(parser.longValue());
+                        break;
+                    case FLOAT:
+                        generator.writeNumber(parser.floatValue());
+                        break;
+                    case DOUBLE:
+                        generator.writeNumber(parser.doubleValue());
+                        break;
+                }
+                break;
+            case VALUE_BOOLEAN:
+                generator.writeBoolean(parser.booleanValue());
+                break;
+            case VALUE_NULL:
+                generator.writeNull();
+                break;
+            case VALUE_EMBEDDED_OBJECT:
+                generator.writeBinary(parser.binaryValue());
+        }
+    }
+
 
     @Override
     public void flush() throws IOException {
