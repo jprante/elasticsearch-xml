@@ -28,7 +28,7 @@ The JSON to XML conversion uses some tricks. Therefore you must not be surprised
 
 ### Elasticsearch 2.x
 
-    ./bin/plugin install 'http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-plugin-xml/2.3.5.0/elasticsearch-plugin-xml-2.3.5.0-plugin.zip'
+    ./bin/plugin install 'http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-xml/2.3.5.0/elasticsearch-xml-2.3.5.0-plugin.zip'
 
 ### Elasticsearch 1.x
 
