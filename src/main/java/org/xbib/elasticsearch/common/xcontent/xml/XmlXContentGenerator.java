@@ -430,7 +430,6 @@ public class XmlXContentGenerator implements XContentGenerator {
         }
     }
 
-
     @Override
     public void flush() throws IOException {
         generator.flush();
@@ -469,7 +468,7 @@ public class XmlXContentGenerator implements XContentGenerator {
         int pos = name.indexOf(':');
         if (pos > 0) {
             nsPrefix = name.substring(0, pos);
-            nsURI = context != null? context.getNamespaceURI(nsPrefix) : XmlXParams.DEFAULT_ROOT.getNamespaceURI();
+            nsURI = context != null ? context.getNamespaceURI(nsPrefix) : XmlXParams.DEFAULT_ROOT.getNamespaceURI();
             if (nsURI == null) {
                 throw new IOException("unknown namespace prefix: " + nsPrefix);
             }
@@ -477,6 +476,4 @@ public class XmlXContentGenerator implements XContentGenerator {
         }
         return new QName(nsURI, name, nsPrefix);
     }
-
-
 }

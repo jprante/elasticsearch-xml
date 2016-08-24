@@ -27,12 +27,28 @@ public class XmlPluginTest extends NodeTestUtils {
         }
         URL base = new URL("http://" + httpAddress.getHost() + ":" + httpAddress.getPort());
         URL url = new URL(base, "/_cluster/health?xml");
-
         BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
         String line;
         if ((line = reader.readLine()) != null) {
             assertTrue(line.startsWith("<root xmlns=\"http://elasticsearch.org/ns/1.0/\">"));
             assertTrue(line.endsWith("</root>"));
+        }
+        reader.close();
+    }
+
+    @Test
+    public void testPrettyHealthResponse() throws Exception {
+        InetSocketTransportAddress httpAddress = findHttpAddress(client("1"));
+        if (httpAddress == null) {
+            throw new IllegalArgumentException("no HTTP address found");
+        }
+        URL base = new URL("http://" + httpAddress.getHost() + ":" + httpAddress.getPort());
+        URL url = new URL(base, "/_cluster/health?xml&pretty");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+        String line;
+        // check only first line
+        if ((line = reader.readLine()) != null) {
+            assertTrue(line.startsWith("<root xmlns=\"http://elasticsearch.org/ns/1.0/\">"));
         }
         reader.close();
     }

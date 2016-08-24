@@ -1,5 +1,7 @@
 package org.xbib.elasticsearch.common.xcontent.xml;
 
+import com.ctc.wstx.stax.WstxInputFactory;
+import com.ctc.wstx.stax.WstxOutputFactory;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -23,17 +25,38 @@ import java.io.Reader;
  */
 public class XmlXContent implements XContent {
 
-    private final static XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-
-    private final static XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
-
+    /*
+     *  This is a bit tricky. We want Woodstox. Woodstox is stax2-api, and can indent XML. We package it in the plugin.
+     *  But how can we force to load Woodstox instead of internal com.sun JDK streaming XML parser?
+     *
+     *  1) Elasticsearch runs the JVM in a "parent" classpath and a plugin in a separate "child" classpath.
+     *  2) the Java XML API under XMLInputFactory.newInstance() / XMLOutputFactory.newInstance()
+     *  uses a mixture of META-INF/services and system property configuration.
+     *  Both work only on Elasticsearch parent classloader. They can not use resources inside a plugin.
+     *  So, XML factory lookup does only work on the ES "lib" folder.
+     *  3) com.fasterxml.jackson.dataformat.xml.XmlFactory creates internal XMLStreamWriter instances to create an
+     *  indenting XML stream in the generator. We need XMLStreamWriter2 for indentation.
+     *  But XmlFactory uses the ES parent class loader because it's JDK code in javax.xml.stream that tries to load it.
+     *  Therefore, XML indentation crashes with:
+     *  java.lang.UnsupportedOperationException: Not implemented
+     *  at org.codehaus.stax2.ri.Stax2WriterAdapter.writeRaw(Stax2WriterAdapter.java:380)
+     *  because it only sees the Stax API implementation of the JDK, not Woodstox of the plugin.
+     *  4) We can work around it by:
+     *     a) setting system properties in this static initializer (as early as possible)
+     *     b) use direct initialization of WstxInputFactory / WstxOutputFactory, no javax.xml.stream class loading
+     */
     static {
+        System.setProperty("javax.xml.stream.XMLInputFactory", WstxInputFactory.class.getName());
+        System.setProperty("javax.xml.stream.XMLOutputFactory", WstxOutputFactory.class.getName());
+
+        XMLInputFactory inputFactory = new WstxInputFactory(); // do not use  XMLInputFactory.newInstance()
         inputFactory.setProperty("javax.xml.stream.isNamespaceAware", Boolean.TRUE);
         inputFactory.setProperty("javax.xml.stream.isValidating", Boolean.FALSE);
         inputFactory.setProperty("javax.xml.stream.isCoalescing", Boolean.TRUE);
         inputFactory.setProperty("javax.xml.stream.isReplacingEntityReferences", Boolean.FALSE);
         inputFactory.setProperty("javax.xml.stream.isSupportingExternalEntities", Boolean.FALSE);
 
+        XMLOutputFactory outputFactory = new WstxOutputFactory(); // do not use  XMLOutputFactory.newInstance()
         outputFactory.setProperty("javax.xml.stream.isRepairingNamespaces", Boolean.TRUE);
 
         xmlFactory = new XmlFactory(inputFactory, outputFactory);
@@ -56,6 +79,7 @@ public class XmlXContent implements XContent {
     private final static XmlXContent xmlXContent;
 
     private XmlXContent() {
+
     }
 
     @Override

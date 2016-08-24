@@ -18,6 +18,7 @@ The JSON to XML conversion uses some tricks. Therefore you must not be surprised
 
 | Elasticsearch version    | Plugin     | Release date |
 | ------------------------ | -----------| -------------|
+| 2.3.5                    | 2.3.5.1    | Aug 24, 2016 |
 | 2.3.5                    | 2.3.5.0    | Aug 13, 2016 |
 | 1.6.0                    | 1.6.0.2    | Jul  3, 2015 |
 | 1.4.2                    | 1.4.2.0    | Feb  2, 2015 |
@@ -28,7 +29,7 @@ The JSON to XML conversion uses some tricks. Therefore you must not be surprised
 
 ### Elasticsearch 2.x
 
-    ./bin/plugin install 'http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-xml/2.3.5.0/elasticsearch-xml-2.3.5.0-plugin.zip'
+    ./bin/plugin install 'http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-xml/2.3.5.1/elasticsearch-xml-2.3.5.1-plugin.zip'
 
 ### Elasticsearch 1.x
 
@@ -43,9 +44,14 @@ The Maven project site is available at [Github](http://jprante.github.io/elastic
 
 # Examples
 
-Consider the following JSON documents
+Consider the following JSON documents.
+
+Command:
 
     curl '0:9200/_search?pretty'
+
+Output:
+
     {
       "took" : 2,
       "timed_out" : false,
@@ -96,9 +102,14 @@ Consider the following JSON documents
       }
     }
 
-The same in XML
+The same in XML.
+
+Command:
 
     curl -H 'Accept: application/xml'  '0:9200/_search?pretty'
+    
+Output:    
+    
     <root xmlns="http://elasticsearch.org/ns/1.0/" xmlns:p="http://dummy.org">
       <took>3</took>
       <timed_out>false</timed_out>
@@ -190,13 +201,13 @@ If XML attributes are passed in sending documents, they will appear as normal JS
 
 If nested XML do not lead to a proper JSON object, an empty JSON name is used, which might not be useful.
 
-Example
+Command:
 
     curl -XPOST -H 'Accept: application/xml' '0:9200/a/c/1' -d '<root><name attr="test">value</name></root>'
-
-Result
-
     curl '0:9200/a/c/1?pretty'
+
+Output:
+
     {
       "_index" : "a",
       "_type" : "c",
@@ -205,13 +216,15 @@ Result
       "found" : true, "_source" : {"name":{"attr":"test","":"value"}}
     }
 
-Another example
+Another example.
+
+Command:
 
     curl -XPOST '0:9200/a/c/2' -d '{"test":{"@attr": "value"}}'
-
-Result
-
     curl -H 'Accept: application/xml' '0:9200/a/c/2?pretty'
+
+Output:
+
     <root xmlns="http://elasticsearch.org/ns/1.0/" xmlns:es="http://elasticsearch.org/ns/1.0/">
       <index>a</index>
       <type>c</type>

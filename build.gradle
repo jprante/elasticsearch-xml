@@ -16,6 +16,7 @@ ext {
             'elasticsearch' : '2.3.5',
             'jackson': '2.6.6',
             'woodstox' : '5.0.2',
+            'stax2-api': '4.0.0',
             'log4j': '2.5',
             'junit' : '4.12'
     ]
@@ -80,10 +81,11 @@ configurations {
 dependencies {
     compile "org.elasticsearch:elasticsearch:${versions.elasticsearch}"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${versions.jackson}"
+    compile "com.fasterxml.woodstox:woodstox-core:${versions.woodstox}"
+    compile "org.codehaus.woodstox:stax2-api:${versions.'stax2-api'}"
     testCompile "junit:junit:${versions.junit}"
     testCompile "org.apache.logging.log4j:log4j-slf4j-impl:${versions.log4j}"
     testCompile "org.apache.logging.log4j:log4j-core:${versions.log4j}"
-    testCompile "com.fasterxml.woodstox:woodstox-core:${versions.woodstox}"
     releaseJars "${project.group}:${project.name}:${project.version}"
     wagon 'org.apache.maven.wagon:wagon-ssh-external:2.10'
 }
